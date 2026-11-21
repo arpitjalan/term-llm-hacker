@@ -1,0 +1,14 @@
+{
+  "nodeAccents": {
+    "my-laptop": "accent",
+    "my-server": "blue",
+    "my-container": "green"
+  },
+  "nodeIcons": {
+    "my-assistant": "core",
+    "my-nas": "home"
+  },
+  "nodeImages": {
+    "my-laptop": "local/laptop.png"
+  }
+}

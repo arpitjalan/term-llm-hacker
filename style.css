@@ -1,0 +1,4163 @@
+/* Hacker, Omarchy edition
+ *
+ * The term-llm web UI dressed the way Omarchy (https://omarchy.org) dresses
+ * its own apps, taken from Omarchy's shell tokens and the theme templates it
+ * ships for T3 Code and Obsidian:
+ *
+ *   - colour comes only from the active Omarchy theme's palette;
+ *   - one monospace font everywhere, as `omarchy font set` makes it:
+ *     JetBrains Mono where installed (Omarchy's default), else the system's;
+ *   - one corner radius for every framed surface, Hyprland's rounding:
+ *     square by default, 6px when corners are rounded;
+ *   - flat surfaces framed by borders, never shadows or glass: controls at
+ *     foreground 40%, cards at 12%, menus and dialogs in a 2px foreground
+ *     frame, the accent on whatever is focused or active;
+ *   - control states as the shell draws them: foreground over the surface at
+ *     4% (normal), 8% (hover), 18% (selected) and 22% (pressed);
+ *   - quick ease-out motion with no bounce; menus opened by a keystroke
+ *     don't animate at all.
+ *
+ * Theme state lives on <html>, set by main.js:
+ *   data-vn-theme="tokyo-night|…"   the Omarchy theme being shown
+ *   data-vn-scheme="dark|light"     that theme's mode
+ *   data-vn-accent="accent|blue|…"  accent role: the theme's own, or one of
+ *                                   its palette colours
+ *   data-vn-corners="sharp|rounded"
+ *   data-vn-type="compact|comfortable"
+ * and the theme's palette as inline --om-* custom properties (colors.js).
+ */
+
+/* ------------------------------------------------------ Omarchy palettes */
+
+/* BEGIN GENERATED OMARCHY PALETTES (tools/gen-themes.mjs) */
+/* Before main.js applies the saved theme: Tokyo Night, or Catppuccin Latte on a
+ * light system, so nobody sees the wrong scheme flash. main.js then sets the
+ * same properties inline for whichever theme is chosen. */
+:root {
+  color-scheme: dark;
+  --om-accent: #7aa2f7;
+  --om-selection: #292e42;
+  --om-muted: #414868;
+  --om-background: #1a1b26;
+  --om-dark-background: #13141c;
+  --om-darker-background: #0e0e14;
+  --om-lighter-background: #24283b;
+  --om-foreground: #a9b1d6;
+  --om-dark-foreground: #565f89;
+  --om-light-foreground: #b4bee6;
+  --om-bright-foreground: #c0caf5;
+  --om-red: #f7768e;
+  --om-yellow: #e0af68;
+  --om-orange: #eb927b;
+  --om-green: #9ece6a;
+  --om-cyan: #449dab;
+  --om-blue: #7aa2f7;
+  --om-magenta: #ad8ee6;
+  --om-brown: #75493d;
+  --om-bright-red: #ff7a93;
+  --om-bright-yellow: #ff9e64;
+  --om-bright-green: #b9f27c;
+  --om-bright-cyan: #0db9d7;
+  --om-bright-blue: #7da6ff;
+  --om-bright-magenta: #bb9af7;
+  --om-on-accent: #1a1b26;
+  --om-on-red: #1a1b26;
+  --om-on-orange: #1a1b26;
+  --om-on-yellow: #1a1b26;
+  --om-on-green: #1a1b26;
+  --om-on-cyan: #1a1b26;
+  --om-on-blue: #1a1b26;
+  --om-on-magenta: #1a1b26;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-vn-theme]) {
+    color-scheme: light;
+    --om-accent: #1e66f5;
+    --om-selection: #ccd0da;
+    --om-muted: #acb0be;
+    --om-background: #eff1f5;
+    --om-dark-background: #e3e4e8;
+    --om-darker-background: #d7d8dc;
+    --om-lighter-background: #dce0e8;
+    --om-foreground: #4c4f69;
+    --om-dark-foreground: #9ca0b0;
+    --om-light-foreground: #5c5f77;
+    --om-bright-foreground: #4c4f69;
+    --om-red: #d20f39;
+    --om-yellow: #df8e1d;
+    --om-orange: #d84e2b;
+    --om-green: #40a02b;
+    --om-cyan: #179299;
+    --om-blue: #1e66f5;
+    --om-magenta: #ea76cb;
+    --om-brown: #6c2715;
+    --om-bright-red: #d20f39;
+    --om-bright-yellow: #df8e1d;
+    --om-bright-green: #40a02b;
+    --om-bright-cyan: #179299;
+    --om-bright-blue: #1e66f5;
+    --om-bright-magenta: #ea76cb;
+    --om-on-accent: #ffffff;
+    --om-on-red: #eff1f5;
+    --om-on-orange: #000000;
+    --om-on-yellow: #000000;
+    --om-on-green: #000000;
+    --om-on-cyan: #000000;
+    --om-on-blue: #ffffff;
+    --om-on-magenta: #000000;
+  }
+}
+/* END GENERATED OMARCHY PALETTES */
+
+/* --------------------------------------------------------- accent roles */
+
+:root { --vn-accent: var(--om-accent); --vn-on-accent: var(--om-on-accent); }
+:root[data-vn-accent="red"]     { --vn-accent: var(--om-red);     --vn-on-accent: var(--om-on-red); }
+:root[data-vn-accent="orange"]  { --vn-accent: var(--om-orange);  --vn-on-accent: var(--om-on-orange); }
+:root[data-vn-accent="yellow"]  { --vn-accent: var(--om-yellow);  --vn-on-accent: var(--om-on-yellow); }
+:root[data-vn-accent="green"]   { --vn-accent: var(--om-green);   --vn-on-accent: var(--om-on-green); }
+:root[data-vn-accent="cyan"]    { --vn-accent: var(--om-cyan);    --vn-on-accent: var(--om-on-cyan); }
+:root[data-vn-accent="blue"]    { --vn-accent: var(--om-blue);    --vn-on-accent: var(--om-on-blue); }
+:root[data-vn-accent="magenta"] { --vn-accent: var(--om-magenta); --vn-on-accent: var(--om-on-magenta); }
+
+/* ------------------------------------------------------------- tokens */
+
+/* Every theme shares these: each is a palette colour or a mix of two, so a
+ * light theme needs no copy of them. */
+:root {
+  /* Omarchy's control states (default theme/shell.toml [controls]): the
+   * foreground over whatever is beneath. Hover has the *fainter* border. */
+  --om-fill: color-mix(in srgb, var(--om-foreground) 4%, transparent);
+  --om-fill-hover: color-mix(in srgb, var(--om-foreground) 8%, transparent);
+  --om-fill-selected: color-mix(in srgb, var(--om-foreground) 18%, transparent);
+  --om-fill-pressed: color-mix(in srgb, var(--om-foreground) 22%, transparent);
+  --om-line: color-mix(in srgb, var(--om-foreground) 40%, transparent);
+  --om-line-hover: color-mix(in srgb, var(--om-foreground) 25%, transparent);
+  --om-line-soft: color-mix(in srgb, var(--om-foreground) 12%, transparent);
+  /* Menus, popovers and dialogs are framed in the foreground, 2px. */
+  --om-frame: var(--om-foreground);
+  /* The full-screen dim behind a menu or dialog: the background at 50%. */
+  --om-scrim: color-mix(in srgb, var(--om-background) 50%, transparent);
+
+  /* Hyprland's decoration:rounding. Small parts take at most 4px of it. */
+  --om-radius: 0px;
+  --om-radius-sm: min(4px, var(--om-radius));
+
+  /* The family Omarchy installs, then the platform's own monospace. Nothing
+   * is downloaded: a font file would outweigh the rest of the extension. */
+  --om-font: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SF Mono",
+    SFMono-Regular, Menlo, Consolas, "DejaVu Sans Mono", monospace;
+  --vn-font-sans: var(--om-font);
+  --font-mono: var(--om-font);
+
+  --vn-accent-soft: color-mix(in srgb, var(--vn-accent) 16%, transparent);
+  /* The accent as text: nudged toward the foreground so it reads on light
+   * themes whose accents are pale. */
+  --vn-accent-text: color-mix(in srgb, var(--vn-accent) 80%, var(--om-foreground));
+  /* Focus is the accent drawn as a border, like Hyprland's active window. */
+  --vn-ring: inset 0 0 0 1px var(--vn-accent);
+
+  --bg: var(--om-background);
+  --bg-accent: var(--om-fill-hover);
+  --bg-accent-2: var(--om-fill);
+  --surface: color-mix(in srgb, var(--om-foreground) 4%, var(--om-background));
+  --surface-strong: var(--surface);
+  --surface-1: var(--surface);
+  --surface-2: color-mix(in srgb, var(--om-foreground) 8%, var(--om-background));
+  --surface-3: color-mix(in srgb, var(--om-foreground) 18%, var(--om-background));
+  --surface-elevated: var(--om-background);
+  --surface-border: var(--om-line-soft);
+
+  --border: var(--om-line-soft);
+  --border-strong: var(--om-line-hover);
+
+  --text: var(--om-foreground);
+  /* Quieter text stays at least 4:1 (muted) and 3:1 (subtle) on every theme. */
+  --text-muted: color-mix(in srgb, var(--om-foreground) 78%, var(--om-background));
+  --vn-text-subtle: color-mix(in srgb, var(--om-foreground) 64%, var(--om-background));
+  --muted: var(--om-muted);
+
+  --accent: var(--om-bright-foreground);
+  --accent-strong: var(--om-bright-foreground);
+  --accent-green: var(--om-green);
+  --accent-amber: var(--om-yellow);
+  --accent-red: var(--om-red);
+  --success: var(--om-green);
+  --danger: var(--om-red);
+  --link: var(--vn-accent-text);
+  /* Error copy leans toward the foreground so it stays readable on every
+   * theme, as Omarchy's T3 Code theme does. */
+  --error-text: color-mix(in srgb, var(--om-red) 65%, var(--om-foreground));
+  --btn-accent-text: var(--vn-on-accent);
+  --stop-btn-text: var(--om-red);
+  --spinner-ring: color-mix(in srgb, var(--vn-on-accent) 30%, transparent);
+
+  --backdrop: var(--om-scrim);
+  --overlay: var(--om-scrim);
+  /* Flat: no shadow anywhere. (A transparent shadow, not `none`, so lists
+   * that include these tokens stay valid.) */
+  --shadow-soft: 0 0 #0000;
+  --shadow-strong: 0 0 #0000;
+
+
+  --vn-tool-bg: var(--om-fill);
+  --vn-tool-bg-hover: var(--om-fill-hover);
+  --vn-user-bubble: color-mix(in srgb, var(--om-foreground) 8%, var(--om-background));
+
+  /* The app's theme seeds and component tokens. */
+  --gradient-accent: var(--surface-2);
+  --gradient-accent-strong: var(--vn-accent);
+  --accent-blue: var(--vn-accent);
+  --accent-hover: color-mix(in srgb, var(--vn-accent) 88%, var(--om-foreground));
+  --accent-active: color-mix(in srgb, var(--vn-accent) 85%, var(--om-background));
+  --code-inline-bg: var(--om-fill);
+  --code-inline-text: color-mix(in srgb, var(--om-cyan) 70%, var(--om-foreground));
+  --content-width: 768px;
+  --message-font-size: 0.8125rem;
+
+  --header-action-height: 30px;
+  --header-action-radius: var(--om-radius);
+  --header-action-bg: transparent;
+  --header-action-bg-hover: var(--om-fill-hover);
+  --header-action-bg-active: var(--om-fill-selected);
+  --header-action-border: transparent;
+  --header-action-border-active: var(--om-line);
+  --header-action-shadow: 0 0 #0000;
+
+  /* Motion: Omarchy's ease-out (a strong start, no overshoot), short. */
+  --vn-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --vn-fast: 120ms;
+  --vn-med: 180ms;
+  --vn-slow: 250ms;
+
+  /* Syntax, as Omarchy's editor themes colour it. */
+  --syntax-text: var(--om-foreground);
+  --syntax-keyword: var(--om-bright-magenta);
+  --syntax-entity: var(--om-blue);
+  --syntax-constant: var(--om-orange);
+  --syntax-string: var(--om-green);
+  --syntax-variable: var(--om-yellow);
+  /* dark_foreground is a theme's comment colour, lifted where it is faint. */
+  --syntax-comment: color-mix(in srgb, var(--om-dark-foreground) 55%, var(--om-foreground));
+  --syntax-tag: var(--om-red);
+  --syntax-heading: var(--om-blue);
+  --syntax-bullet: var(--om-cyan);
+
+  --diff-add-bg: color-mix(in srgb, var(--om-green) 12%, transparent);
+  --diff-add-ln-bg: color-mix(in srgb, var(--om-green) 24%, transparent);
+  --diff-del-bg: color-mix(in srgb, var(--om-red) 12%, transparent);
+  --diff-del-ln-bg: color-mix(in srgb, var(--om-red) 24%, transparent);
+  --diff-file-del-bg: color-mix(in srgb, var(--om-red) 7%, transparent);
+  --diff-file-del-ln-bg: color-mix(in srgb, var(--om-red) 14%, transparent);
+
+  /* Terminal, as Omarchy's alacritty.toml template maps the palette. */
+  --vn-term-bg: var(--om-background);
+  --vn-term-fg: var(--om-foreground);
+  --vn-term-cursor: var(--om-bright-foreground);
+  --vn-term-sel: var(--om-selection);
+  --vn-ansi-0: var(--om-background);  --vn-ansi-8: var(--om-muted);
+  --vn-ansi-1: var(--om-red);         --vn-ansi-9: var(--om-bright-red);
+  --vn-ansi-2: var(--om-green);       --vn-ansi-10: var(--om-bright-green);
+  --vn-ansi-3: var(--om-yellow);      --vn-ansi-11: var(--om-bright-yellow);
+  --vn-ansi-4: var(--om-blue);        --vn-ansi-12: var(--om-bright-blue);
+  --vn-ansi-5: var(--om-magenta);     --vn-ansi-13: var(--om-bright-magenta);
+  --vn-ansi-6: var(--om-cyan);        --vn-ansi-14: var(--om-bright-cyan);
+  --vn-ansi-7: var(--om-foreground);  --vn-ansi-15: var(--om-bright-foreground);
+}
+
+:root[data-vn-scheme="dark"] { color-scheme: dark; }
+:root[data-vn-scheme="light"] { color-scheme: light; }
+:root[data-vn-corners="rounded"] { --om-radius: 6px; }
+
+/* ------------------------------------------------------- Omarchy chrome */
+
+/* One radius for every framed surface, as Omarchy's shell draws them and its
+ * T3 Code theme forces: corners follow the windows. This reaches the app's own
+ * pills and cards too, so nothing keeps another shape. */
+:where(body *),
+:where(body *)::before,
+:where(body *)::after {
+  border-radius: var(--om-radius) !important;
+}
+
+/* ...except true circles: spinners and radios. */
+.startup-spinner,
+.workspace-notice-spinner,
+.send-btn .spinner,
+.voice-status-spinner,
+.live-status-spinner,
+.compaction-status-spinner,
+.unconfirmed-send-check[aria-busy="true"]::before,
+.interrupt-badge .interrupt-spinner,
+.diff-comment-status.queued .diff-comment-status-icon,
+.diff-comment-status.sending .diff-comment-status-icon,
+.current-plan-step-ring,
+.current-plan-step-pulse,
+.rename-improve-btn.is-loading::before,
+.project-pagination-sentinel.loading::after,
+.worktree-radio,
+.project-choice-check {
+  border-radius: 50% !important;
+}
+
+/* Small parts take at most 4px of it, as Omarchy's apps cap them. */
+kbd,
+.vn-kbd,
+.vn-search-kbd,
+.markdown-body :not(pre) > code,
+.header-crumb,
+.header-title-badge,
+.vn-swatch,
+.vn-theme-tile,
+.vn-meter i,
+.tool-group-entry[data-vn-tool] .tool-entry-icon,
+.hub-agent-icon,
+.vn-code-btn,
+.markdown-body pre[data-vn-code] .code-copy-btn,
+.hub-agent-link[aria-current="true"]::after,
+.vn-popover-label[data-active]::after,
+.brand::before {
+  border-radius: var(--om-radius-sm) !important;
+}
+
+/* Switches are pills only when corners are rounded, like Omarchy's own. */
+:root[data-vn-corners="rounded"] :is(.toggle-switch-track, .toggle-switch-thumb,
+  .runtime-popover-fast-toggle, .runtime-popover-fast-toggle span, .vn-switch, .vn-switch span) {
+  border-radius: 999px !important;
+}
+
+/* No frosted glass: Omarchy's surfaces are solid unless its Glassy toggle is on. */
+:where(body *) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* ------------------------------------------------------------- base type */
+
+html,
+body {
+  font-family: var(--vn-font-sans);
+  /* Text stays literal: no programming ligatures in prose or code. */
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+html,
+body {
+  background: var(--bg);
+}
+
+:root {
+  transition: background-color var(--vn-med) ease;
+}
+
+body {
+  letter-spacing: 0;
+}
+
+button,
+input,
+textarea,
+select,
+.diff-note,
+.diff-image-label,
+.diff-show-more,
+.diff-comment-panel {
+  font-family: inherit;
+}
+
+code,
+pre,
+kbd,
+samp,
+.tool-details pre,
+.tool-argument dd {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+}
+
+::selection {
+  background: var(--om-selection);
+  color: var(--om-bright-foreground);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--om-muted) transparent;
+}
+
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--om-muted);
+  border: 0;
+  border-radius: var(--om-radius);
+}
+*::-webkit-scrollbar-thumb:hover { background-color: var(--om-dark-foreground); }
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--vn-accent);
+  outline-offset: 1px;
+}
+
+/* Containers the app focuses programmatically (dialogs, the header, the
+ * chat region) are not controls: no ring on them. */
+[tabindex="-1"]:focus-visible,
+[role="dialog"]:focus-visible,
+dialog:focus-visible { outline: none; }
+
+a {
+  color: var(--link);
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+}
+
+/* Smooth theme / accent swaps (opt-in during a switch, set by main.js). */
+:root[data-vn-switching] *,
+:root[data-vn-switching] *::before,
+:root[data-vn-switching] *::after {
+  transition: background-color 180ms ease, border-color 180ms ease,
+    color 140ms ease, fill 140ms ease, box-shadow 180ms ease !important;
+}
+
+/* --------------------------------------------------------------- layout */
+
+.main,
+.chat-scroll {
+  background: transparent;
+}
+
+/* --------------------------------------------------------------- sidebar */
+
+/* Laid out like term-llm's personal-assistant sidebar: the brand up top, one
+ * framed primary action, quiet uppercase labels over one-line rows, and
+ * settings at the foot (main.js adds that row). Same background as the chat,
+ * divided by a soft rule, as Omarchy's T3 Code theme draws its sidebar. */
+.sidebar {
+  background: var(--bg);
+  border-inline-end: 1px solid var(--border);
+}
+
+/* Brand first and large; the header's buttons follow it. */
+.sidebar-header {
+  min-height: 60px;
+  gap: 4px;
+  padding: calc(0.85rem + var(--safe-top)) 0.6rem 0.6rem 1rem;
+}
+
+.sidebar-header > .brand {
+  order: -1;
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-start;
+}
+
+.brand {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+/* Settings live at the foot of the sidebar once that row is there. */
+.sidebar-panel:has(> .vn-sidebar-foot) #settingsBtn { display: none; }
+
+/* New chat leads, then search, then the lists. */
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  padding-top: 0.15rem;
+}
+
+.sidebar-actions { order: -1; gap: 2px; padding: 0.15rem 0.75rem 0.7rem; }
+.sidebar-search-wrap { padding: 0 0.75rem 0.4rem; }
+
+/* The one primary action, framed. */
+.new-chat-btn {
+  width: 100%;
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  gap: 0.6rem;
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: background-color var(--vn-fast) ease, border-color var(--vn-fast) ease;
+}
+
+.new-chat-btn:hover {
+  background: var(--om-fill-hover);
+  border-color: var(--om-line-hover);
+}
+
+/* Other actions (widgets, back to the Hub) read as navigation rows. */
+.widgets-sidebar-btn,
+.back-to-hub-link {
+  width: 100%;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  gap: 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.widgets-sidebar-btn:hover,
+.back-to-hub-link:hover {
+  background: var(--om-fill-hover);
+  border-color: transparent;
+}
+
+.new-chat-btn svg,
+.widgets-sidebar-btn svg,
+.back-to-hub-link svg {
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+}
+
+.new-chat-btn:hover svg,
+.widgets-sidebar-btn:hover svg { color: var(--vn-accent); }
+
+.sidebar-search-input {
+  height: 30px;
+  padding: 0 0.7rem;
+  font-size: 0.75rem;
+  background: var(--om-fill);
+  border: 1px solid var(--om-line);
+  transition: border-color var(--vn-fast) ease;
+}
+
+.sidebar-search-input::placeholder { color: var(--vn-text-subtle); }
+
+.sidebar-search-input:focus {
+  outline: none;
+  border-color: var(--vn-accent);
+  box-shadow: var(--vn-ring);
+}
+
+.session-groups {
+  --sidebar-row-gutter: 0.5rem;
+  --sidebar-row-padding-inline: 0.75rem;
+}
+
+.session-group { margin-bottom: 0.25rem; }
+
+/* Section labels: small, uppercase, widely spaced. */
+.session-group h3,
+.session-group-toggle {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--vn-text-subtle);
+}
+
+.session-group h3 { padding: 0.9rem 1.25rem 0.4rem; }
+.session-group h3.collapsible-session-group-heading { padding: 0; }
+.session-group-toggle { padding: 0.9rem 1.25rem 0.4rem; }
+
+/* App-collapsible headings (Agents, Projects): chevron after the label so
+ * every section title starts on the same edge. */
+.session-group-toggle .session-group-chevron { order: 2; margin-left: 0.1rem; }
+
+/* One line per chat; the hover title and the launcher still carry the
+ * details. */
+.session-btn {
+  padding: 0.45rem var(--sidebar-row-padding-inline);
+  border: 0;
+  transition: background-color var(--vn-fast) ease;
+}
+
+.session-row .session-btn { padding-right: 2.2rem; }
+.session-btn:hover { background: var(--om-fill-hover); }
+
+.session-btn.active {
+  background: var(--om-fill-selected);
+  box-shadow: none;
+}
+
+.session-title {
+  font-size: 0.75rem;
+  font-weight: 450;
+  line-height: 1.45;
+  -webkit-line-clamp: 1;
+  color: var(--text);
+}
+
+.session-btn.active .session-title { font-weight: 700; color: var(--accent-strong); }
+
+.session-meta { display: none; }
+
+.session-row.is-active .session-title::before,
+.session-row.is-input-required .session-title::before,
+.session-row.is-unseen .session-title::before {
+  width: 6px;
+  height: 6px;
+  margin-right: 0.5em;
+  vertical-align: 0.12em;
+}
+
+.session-row.is-active .session-title::before {
+  background: var(--accent-green);
+  box-shadow: none;
+}
+
+.session-row.is-input-required .session-title::before { background: var(--accent-amber); }
+.session-row.is-unseen .session-title::before { background: var(--vn-accent); }
+
+.session-row-menu { top: 50%; right: 0.35rem; transform: translateY(-50%); }
+.session-menu-trigger { width: 24px; height: 24px; border: 0; }
+
+@media (hover: hover) and (pointer: fine) {
+  .session-menu-trigger { opacity: 0; transition: opacity var(--vn-fast) ease; }
+
+  .session-row:hover .session-menu-trigger,
+  .session-row:focus-within .session-menu-trigger,
+  .session-row.menu-open .session-menu-trigger { opacity: 1; }
+}
+
+.session-menu-trigger:hover,
+.session-row.menu-open .session-menu-trigger { background: var(--om-fill-selected); }
+
+/* Projects view: a project reads like a chat row, and its date labels sit
+ * under the section labels, on the same edge. */
+.project-group-header { margin-inline: var(--sidebar-row-gutter); }
+
+.project-group-toggle {
+  height: auto;
+  padding: 0.45rem var(--sidebar-row-padding-inline);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  transition: background-color var(--vn-fast) ease;
+}
+
+.project-group-toggle:hover { background: var(--om-fill-hover); }
+.project-group-toggle:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--vn-accent); }
+:root[data-vn-type="comfortable"] .project-group-toggle { font-size: 0.8125rem; }
+
+.session-date-group h4 {
+  padding: 0.55rem 1.25rem 0.3rem;
+  color: var(--vn-text-subtle);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+}
+
+/* The foot: settings, and the node (or term-llm) it belongs to. */
+.vn-sidebar-foot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0.5rem 0.75rem calc(0.5rem + var(--safe-bottom));
+  border-top: 1px solid var(--border);
+}
+
+.vn-sidebar-foot-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.4rem 0.5rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease;
+}
+
+.vn-sidebar-foot-btn:hover { background: var(--om-fill-hover); color: var(--text); }
+.vn-sidebar-foot-btn svg { width: 15px; height: 15px; }
+
+.vn-sidebar-foot-label {
+  overflow: hidden;
+  color: var(--vn-text-subtle);
+  font-size: 0.6875rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+
+/* Section links under New chat (nav.js), as the personal assistant lists
+ * them: a muted glyph and label per row, the current one filled. They stand
+ * in for the app's Widgets button and its Recent/Projects switch, which stay
+ * in the DOM for the links to press. */
+.sidebar-actions > .new-chat-btn { order: -2; }
+.sidebar-actions > .vn-nav { order: -1; }
+.sidebar-actions:has(> .vn-nav) > .widgets-sidebar-btn,
+.sidebar-panel:has(.vn-nav) > .sidebar-view-footer { display: none; }
+
+.vn-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0.45rem -0.25rem 0.15rem;
+}
+
+.vn-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease;
+}
+
+.vn-nav-item[hidden] { display: none; }
+.vn-nav-item svg { flex: none; width: 16px; height: 16px; }
+.vn-nav-item:hover { background: var(--om-fill-hover); color: var(--text); }
+.vn-nav-item:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--vn-accent); }
+
+.vn-nav-item[aria-current="page"] {
+  background: var(--om-fill-selected);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.vn-nav-item[aria-current="page"] svg { color: var(--vn-accent); }
+.vn-nav-label { flex: 1; min-width: 0; }
+
+.vn-nav-count {
+  color: var(--vn-text-subtle);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Something needs you: the count takes the accent. */
+.vn-nav-item[data-nav="activity"] .vn-nav-count { color: var(--vn-accent); font-weight: 700; }
+
+/* Activity: only chats waiting for you, running, or unread. Searching shows
+ * every match again. */
+:root[data-vn-list="activity"] .sidebar-content:has(.sidebar-search-input:placeholder-shown) #sessionGroups .session-row:not(.is-input-required, .is-active, .is-unseen),
+:root[data-vn-list="activity"] .sidebar-content:has(.sidebar-search-input:placeholder-shown) #sessionGroups .session-group:not(:has(.session-row.is-input-required, .session-row.is-active, .session-row.is-unseen)) {
+  display: none;
+}
+
+.vn-activity-empty {
+  margin: 0;
+  padding: 0.9rem 1.25rem;
+  color: var(--vn-text-subtle);
+  font-size: 0.75rem;
+}
+
+@media (width <= 767px) {
+  .vn-nav-item { padding-block: 0.65rem; }
+}
+
+/* ------------------------------------------------- hub agents section */
+
+.hub-agent-group { position: relative; }
+
+.hub-agent-links {
+  gap: 1px;
+  margin: 0 0.4rem 0.25rem;
+}
+
+.hub-agent-link {
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  column-gap: 0.6rem;
+  padding: 0.3rem 2.2rem 0.3rem 0.45rem;
+  border: 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.3;
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease;
+}
+
+.hub-agent-link:hover {
+  background: var(--om-fill-hover);
+  border-color: transparent;
+  color: var(--text);
+}
+
+.hub-agent-link[aria-current="true"] {
+  background: var(--om-fill-selected);
+  box-shadow: none;
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+/* "here" as a framed tag in the accent. */
+.hub-agent-link[aria-current="true"]::after {
+  content: "here";
+  grid-column: 3;
+  grid-row: 1;
+  padding: 0 5px;
+  border: 1px solid var(--vn-accent);
+  background: transparent;
+  color: var(--vn-accent-text);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* Avatar tile: the agent's accent with its glyph cut out, so the glyph shows
+ * the surface beneath and reads on every theme. term-llm may render the tile
+ * as an empty <span> or as an <svg> drawing its built-in bot icon, so the
+ * glyph is a mask layer (an <svg> has no ::before) and the built-in drawing
+ * is hidden. main.js sets --vn-tile (a palette role) and --vn-glyph. */
+.hub-agent-icon {
+  --vn-glyph-inset: 4px;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  background: var(--vn-tile, var(--vn-accent));
+  -webkit-mask:
+    var(--vn-glyph, linear-gradient(#0000 0 0)) center / calc(100% - 2 * var(--vn-glyph-inset)) no-repeat,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    var(--vn-glyph, linear-gradient(#0000 0 0)) center / calc(100% - 2 * var(--vn-glyph-inset)) no-repeat exclude,
+    linear-gradient(#000 0 0);
+  box-shadow: none;
+}
+
+.hub-agent-icon > * { display: none; }
+
+.hub-agent-icon[data-vn-kind="monogram"] { --vn-glyph-inset: 0px; }
+
+/* A picture from local.json's nodeImages fills the tile instead; pixel art
+ * stays crisp. */
+.hub-agent-icon[data-vn-kind="image"] {
+  --vn-glyph-inset: 1px;
+  background: var(--vn-glyph) center / calc(100% - 2 * var(--vn-glyph-inset)) no-repeat, var(--vn-tile, var(--vn-accent));
+  -webkit-mask: none;
+  mask: none;
+  image-rendering: pixelated;
+}
+
+/* The agent you are on: an accent frame around its tile. */
+.hub-agent-link[aria-current="true"] .hub-agent-icon {
+  outline: 2px solid var(--vn-accent);
+  outline-offset: 2px;
+}
+
+.hub-agent-attention {
+  width: 7px;
+  height: 7px;
+  background: var(--accent-green);
+  box-shadow: none;
+  animation: vn-breathe 1.8s ease-in-out infinite;
+}
+
+.hub-agent-menu { right: 0.3rem; }
+
+.hub-agent-menu-trigger {
+  width: 24px;
+  height: 24px;
+  border: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .hub-agent-menu-trigger {
+    opacity: 0;
+    transition: opacity var(--vn-fast) ease;
+  }
+
+  .hub-agent-row:hover .hub-agent-menu-trigger,
+  .hub-agent-row:focus-within .hub-agent-menu-trigger,
+  .hub-agent-row.menu-open .hub-agent-menu-trigger {
+    opacity: 1;
+  }
+
+  /* "here" badge yields to the menu trigger on hover. */
+  .hub-agent-row:hover .hub-agent-link[aria-current="true"]::after { opacity: 0; }
+}
+
+.hub-agent-group .back-to-hub-link {
+  width: calc(100% - 0.8rem);
+  margin: 2px 0.4rem 0;
+  padding: 0.35rem 0.5rem;
+  gap: 0.6rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--vn-text-subtle);
+}
+
+.hub-agent-group .back-to-hub-link svg {
+  width: 13px;
+  height: 13px;
+  margin-inline: 4.5px;
+}
+
+.hub-agent-group .back-to-hub-link:hover { color: var(--text); }
+
+.sidebar-view-footer {
+  background: transparent;
+  border-top: 1px solid var(--border);
+  padding: 0.45rem 0.5rem calc(0.45rem + var(--safe-bottom));
+}
+
+/* Segmented controls are separate framed buttons, as the shell's button
+ * group draws them; the chosen one takes the selected fill. */
+.sidebar-view-switch {
+  background: transparent;
+  padding: 0;
+  gap: 6px;
+}
+
+.sidebar-view-switch::after { display: none; }
+
+.sidebar-view-switch button {
+  min-height: 28px;
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  transition: background-color var(--vn-fast) ease, border-color var(--vn-fast) ease,
+    color var(--vn-fast) ease;
+}
+
+.sidebar-view-switch button:hover:not(:disabled) {
+  background: var(--om-fill-hover);
+  border-color: var(--om-line-hover);
+}
+
+.sidebar-view-switch button.active {
+  background: var(--om-fill-selected);
+  border-color: transparent;
+  color: var(--accent-strong);
+  font-weight: 700;
+  box-shadow: none;
+}
+
+/* ---------------------------------------------------------- icon buttons */
+
+.icon-btn {
+  border-color: transparent;
+  background: transparent;
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease;
+}
+
+.icon-btn:hover { background: var(--om-fill-hover); color: var(--text); }
+.icon-btn svg { width: 1rem; height: 1rem; }
+
+/* --------------------------------------------------------------- header */
+
+/* A bar like Omarchy's: solid, one rule beneath. */
+.main-header {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .main-header {
+    min-height: 48px;
+    padding-top: calc(0.5rem + var(--safe-top));
+    padding-bottom: 0.5rem;
+  }
+}
+
+.header-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--accent-strong);
+}
+
+/* --- breadcrumbs: project and worktree as framed tags before the title. */
+
+.header-title-context { align-items: center; gap: 8px; }
+
+.header-crumb {
+  align-items: center;
+  height: 22px;
+  gap: 5px;
+  padding: 0 7px;
+  background: var(--om-fill);
+  border: 1px solid var(--om-line-hover);
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease,
+    border-color var(--vn-fast) ease;
+}
+
+.header-crumb:first-child { margin-inline-start: 0; }
+.header-crumb ~ .header-title { margin-inline-start: 2px; }
+/* Split the title's descender padding so it centres on the tags. */
+.header-title-context.has-context .header-title { padding-block: 0.1em; }
+
+/* A folder mark says "project", as the branch glyph says "worktree". */
+.header-crumb-project::before {
+  content: "";
+  flex: none;
+  width: 12px;
+  height: 12px;
+  background: currentColor;
+  opacity: 0.75;
+  -webkit-mask: var(--vn-folder-icon) center / contain no-repeat;
+  mask: var(--vn-folder-icon) center / contain no-repeat;
+  --vn-folder-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z'/%3E%3C/svg%3E");
+}
+
+.header-crumb-worktree svg,
+.header-crumb-worktree .chip-label { flex: none; }
+.header-crumb-worktree svg { width: 12px; height: 12px; opacity: 0.75; }
+.header-crumb-worktree .chip-label { flex: 0 1 auto; }
+.header-crumb-worktree { font-size: 0.6875rem; }
+
+.header-crumb-chevron {
+  width: 11px;
+  height: 11px;
+  margin-inline-end: -2px;
+  opacity: 0.6;
+  transition: opacity var(--vn-fast) ease;
+}
+
+@media (hover: hover) {
+  .header-crumb:hover { background: var(--om-fill-hover); color: var(--text); }
+  .header-crumb:hover .header-crumb-chevron { opacity: 1; }
+  .header-title-badge:hover { background: var(--om-fill-hover); }
+}
+
+.header-crumb[aria-expanded="true"] {
+  background: var(--om-fill-selected);
+  border-color: var(--vn-accent);
+  box-shadow: none;
+  color: var(--text);
+}
+.header-crumb[aria-expanded="true"] .header-crumb-chevron { opacity: 1; }
+
+.header-crumb:focus-visible,
+.header-title-badge:focus-visible {
+  outline: 2px solid var(--vn-accent);
+  outline-offset: 1px;
+  box-shadow: none;
+}
+
+/* "3 paths" matches the crumbs' type, one step smaller. */
+.header-title-badge {
+  height: 20px;
+  padding: 0 6px;
+  border-color: var(--om-line-hover);
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Folded desktop header: the crumbs become a small label line above the
+ * title, so they drop the frame (it would grow the header). */
+@media (width >= 768px) {
+  @container main-header (width < 920px) {
+    .header-title-context.has-context { align-items: center; }
+    .has-context > .header-crumb {
+      height: auto;
+      background: none;
+      border-color: transparent;
+      box-shadow: none;
+      font-size: 0.625rem;
+      font-weight: 600;
+    }
+    .has-context > .header-crumb-project::before { width: 10px; height: 10px; }
+    .has-context > .header-crumb[aria-expanded="true"] { background: none; box-shadow: none; color: var(--vn-accent-text); }
+    .has-context > .header-title-badge { height: auto; }
+  }
+}
+
+/* Line the heading up with the item icons below it. */
+.chip-popover-project .runtime-popover-header {
+  margin-bottom: 0.35rem;
+  padding: 0.25rem 0 0 0.6rem;
+}
+
+.chip-trigger.header-action,
+.header-action {
+  font-size: 0.6875rem;
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease;
+}
+
+.model-chip-primary .chip-label { font-weight: 600; font-size: 0.6875rem; }
+
+/* The model picker moves into the composer (main.js). Keep the original in
+ * the DOM so the app's own popover logic keeps working. */
+:root[data-vn-composer-bar] .header-stats .model-picker {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Theme button injected into the header controls. */
+.vn-theme-btn {
+  position: relative;
+  width: var(--header-action-height);
+  height: var(--header-action-height);
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex: none;
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease;
+}
+
+.vn-theme-btn:hover,
+.vn-theme-btn[aria-expanded="true"] {
+  background: var(--om-fill-hover);
+  color: var(--text);
+}
+
+.vn-theme-btn[aria-expanded="true"] { background: var(--om-fill-selected); }
+
+.vn-theme-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* The accent, as a small block in the corner. */
+.vn-theme-btn::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 6px;
+  height: 6px;
+  background: var(--vn-accent);
+  box-shadow: 0 0 0 2px var(--bg);
+  transition: background-color var(--vn-med) ease;
+}
+
+/* ------------------------------------------------------ theme popover */
+
+/* A flat panel framed in the foreground, as Omarchy frames popovers. It grows
+ * out of the button (0.97, 180ms) and leaves faster (120ms). */
+.vn-popover {
+  position: fixed;
+  z-index: 1100;
+  width: 304px;
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: 8px;
+  padding: 12px 14px 10px;
+  background: var(--bg);
+  border: 2px solid var(--om-frame);
+  box-shadow: none;
+  color: var(--text);
+  font-size: 0.75rem;
+  transform-origin: top right;
+  animation: vn-pop-in 180ms var(--vn-ease) both;
+}
+
+.vn-popover[data-leaving] { animation: vn-pop-out 120ms ease-out both; }
+.vn-popover-backdrop[data-leaving] { animation: vn-fade-out 120ms ease-out both; }
+
+.vn-popover-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1099;
+  background: transparent;
+}
+
+.vn-popover-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 7px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--text-muted);
+}
+
+.vn-popover-label + * + .vn-popover-label,
+.vn-popover .vn-segment + .vn-popover-label,
+.vn-popover .vn-theme-name + .vn-popover-label,
+.vn-popover .vn-swatch-name + .vn-popover-label { margin-top: 14px; }
+
+/* "in use" beside the theme group the page is showing. */
+.vn-popover-label[data-active]::after {
+  content: "in use";
+  padding: 0 4px;
+  border: 1px solid var(--vn-accent);
+  color: var(--vn-accent-text);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* Segments: separate framed buttons; the chosen one takes the selected
+ * fill. (The sliding thumb stays in the markup, unused.) */
+.vn-segment {
+  --vn-seg-count: 3;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--vn-seg-count), 1fr);
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.vn-segment-thumb { display: none; }
+
+.vn-segment button {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 4px 5px;
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--vn-fast) ease, border-color var(--vn-fast) ease,
+    color var(--vn-fast) ease;
+}
+
+.vn-segment button svg { width: 15px; height: 15px; }
+
+/* Text size: "Aa" previews at two sizes. */
+.vn-segment-type button,
+.vn-segment-corners button { flex-direction: row; justify-content: center; gap: 6px; padding-block: 7px; }
+.vn-type-glyph { font-weight: 700; line-height: 1; }
+.vn-type-glyph-sm { font-size: 0.6875rem; }
+.vn-type-glyph-lg { font-size: 0.875rem; }
+
+/* Corners: a corner drawn as it would look. */
+.vn-corner-glyph {
+  width: 12px;
+  height: 12px;
+  border-top: 2px solid currentColor;
+  border-left: 2px solid currentColor;
+}
+.vn-corner-glyph-rounded { border-top-left-radius: 6px !important; }
+.vn-corner-glyph-sharp { border-radius: 0 !important; }
+
+.vn-segment button:hover {
+  background: var(--om-fill-hover);
+  border-color: var(--om-line-hover);
+  color: var(--text);
+}
+
+.vn-segment button[aria-checked="true"] {
+  background: var(--om-fill-selected);
+  border-color: transparent;
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+/* Themes: each a tiny terminal in its own colours (a prompt, coloured
+ * output, a block cursor). The chosen one is framed in the accent, as
+ * Omarchy's picker marks its selection. */
+.vn-themes {
+  display: grid;
+  grid-template-columns: repeat(6, 38px);
+  justify-content: space-between;
+  row-gap: 7px;
+}
+
+.vn-theme-tile {
+  position: relative;
+  width: 38px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--t-fg) 24%, var(--t-bg));
+  background:
+    linear-gradient(var(--t-accent) 0 0) 4px 5px / 5px 3px no-repeat,
+    linear-gradient(var(--t-fg) 0 0) 11px 5px / 15px 3px no-repeat,
+    linear-gradient(var(--t-c1) 0 0) 4px 11px / 10px 3px no-repeat,
+    linear-gradient(var(--t-c2) 0 0) 16px 11px / 6px 3px no-repeat,
+    linear-gradient(var(--t-c3) 0 0) 24px 11px / 8px 3px no-repeat,
+    linear-gradient(var(--t-c4) 0 0) 4px 17px / 13px 3px no-repeat,
+    linear-gradient(var(--t-fg) 0 0) 4px 22px / 4px 4px no-repeat,
+    var(--t-bg);
+  cursor: pointer;
+  transition: outline-color var(--vn-fast) ease;
+}
+
+.vn-theme-tile:hover { outline: 1px solid var(--om-line); outline-offset: 2px; }
+
+.vn-theme-tile[aria-checked="true"],
+.vn-theme-tile[aria-checked="true"]:focus-visible {
+  outline: 2px solid var(--vn-accent);
+  outline-offset: 2px;
+}
+
+.vn-theme-name,
+.vn-swatch-name {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 8px 0 0;
+  font-size: 0.6875rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Accent: the theme's own, or one of its palette colours. */
+.vn-swatches {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 7px;
+}
+
+.vn-swatch {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 0;
+  background: var(--sw);
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--om-foreground) 18%, transparent);
+}
+
+.vn-swatch:hover { outline: 1px solid var(--om-line); outline-offset: 2px; }
+
+.vn-swatch[aria-checked="true"],
+.vn-swatch[aria-checked="true"]:focus-visible {
+  outline: 2px solid var(--om-foreground);
+  outline-offset: 2px;
+}
+
+/* The theme's own accent wears a small corner mark. */
+.vn-swatch[data-accent="accent"]::after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 4px;
+  height: 4px;
+  background: var(--om-on-accent);
+}
+
+.vn-popover-divider {
+  height: 1px;
+  margin: 12px 0 6px;
+  background: var(--border);
+}
+
+.vn-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.vn-switch-copy { display: grid; gap: 1px; min-width: 0; }
+.vn-switch-title { font-size: 0.6875rem; font-weight: 600; }
+.vn-switch-hint { font-size: 0.625rem; color: var(--text-muted); }
+
+/* Omarchy's switch: a framed track at the normal fill; on, it takes the
+ * selected fill and the knob moves over in the foreground. */
+.vn-switch {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 20px;
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+  transition: background-color var(--vn-fast) ease, border-color var(--vn-fast) ease;
+}
+
+.vn-switch span {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: color-mix(in srgb, var(--om-foreground) 72%, var(--om-background));
+  transition: transform var(--vn-fast) var(--vn-ease), background-color var(--vn-fast) ease;
+}
+
+.vn-switch-row:hover .vn-switch { background: var(--om-fill-hover); }
+.vn-switch-row[aria-checked="true"] .vn-switch {
+  background: var(--om-fill-selected);
+  border-color: transparent;
+}
+.vn-switch-row[aria-checked="true"] .vn-switch span {
+  transform: translateX(18px);
+  background: var(--om-bright-foreground);
+}
+
+/* --------------------------------------------------------------- thread */
+
+.chat-scroll {
+  padding-top: 1.5rem;
+  padding-bottom: 1.25rem;
+}
+
+.messages { gap: 0.85rem; }
+.messages > .message.user:not(:first-child) { margin-top: 1rem; }
+
+.message { width: 100%; gap: 0.3rem; }
+
+.message-body {
+  line-height: 1.7;
+  letter-spacing: 0;
+}
+
+.message.assistant .message-body {
+  background: transparent;
+  border: 0;
+  padding: 0 0.1rem;
+}
+
+.message.user {
+  width: auto;
+  max-width: min(85%, 640px);
+  align-self: flex-end;
+}
+
+/* The user's turn: a raised block framed at 25%, as Omarchy's T3 Code theme
+ * draws the message bubble. */
+.message.user .message-body {
+  background: var(--vn-user-bubble);
+  border: 1px solid var(--om-line-hover);
+  padding: 0.6rem 0.9rem;
+  line-height: 1.6;
+  box-shadow: none;
+}
+
+.message-meta {
+  font-size: 0.6875rem;
+  color: var(--vn-text-subtle);
+  font-variant-numeric: tabular-nums;
+  padding: 0 0.15rem;
+}
+
+.message.assistant {
+  flex-flow: row wrap;
+  align-items: center;
+  column-gap: 0.5rem;
+}
+
+.message.assistant > :not(.turn-action-panel, .message-meta) { flex: 1 0 100%; }
+.message.assistant > .turn-action-panel { margin-left: -0.35rem; }
+.message.assistant > .turn-action-panel,
+.message.assistant > .message-meta { align-self: center; }
+.message.assistant:not(:has(> .turn-action-panel)) > .message-meta { display: none; }
+
+@media (hover: hover) and (pointer: fine) {
+  .message .message-meta,
+  .message .turn-action-panel {
+    opacity: 0;
+    transition: opacity var(--vn-fast) ease;
+  }
+
+  .message:hover .message-meta,
+  .message:hover .turn-action-panel,
+  .message:focus-within .turn-action-panel,
+  .message:last-of-type .turn-action-panel,
+  .message:last-of-type .message-meta { opacity: 1; }
+}
+
+.turn-action-panel { gap: 2px; padding: 0; margin-top: 0; }
+
+.turn-action-btn {
+  width: 28px;
+  height: 28px;
+  color: var(--vn-text-subtle);
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease;
+}
+
+.turn-action-btn svg { width: 14px; height: 14px; }
+
+.turn-action-btn:hover,
+.turn-action-btn:focus-visible {
+  background: var(--om-fill-hover);
+  color: var(--text);
+}
+
+/* Markdown, as Omarchy's Obsidian theme renders it: headings take the
+ * palette in order (red, green, yellow, blue, magenta), lifted toward the
+ * foreground so they read on every theme. */
+.markdown-body p { margin: 0.55em 0; }
+.markdown-body > :first-child { margin-top: 0; }
+.markdown-body > :last-child { margin-bottom: 0; }
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  font-weight: 700;
+  letter-spacing: 0;
+  margin: 1.3em 0 0.5em;
+  line-height: 1.35;
+}
+
+.markdown-body h1 { font-size: 1.125rem; color: color-mix(in srgb, var(--om-red) 82%, var(--om-foreground)); }
+.markdown-body h2 { font-size: 1rem; color: color-mix(in srgb, var(--om-green) 82%, var(--om-foreground)); }
+.markdown-body h3 { font-size: 0.875rem; color: color-mix(in srgb, var(--om-yellow) 82%, var(--om-foreground)); }
+.markdown-body h4 { font-size: 0.8125rem; color: color-mix(in srgb, var(--om-blue) 82%, var(--om-foreground)); }
+.markdown-body h5,
+.markdown-body h6 { font-size: 0.8125rem; color: color-mix(in srgb, var(--om-magenta) 82%, var(--om-foreground)); }
+
+.markdown-body strong { font-weight: 700; color: var(--accent-strong); }
+
+.markdown-body ul,
+.markdown-body ol { padding-left: 1.5rem; margin: 0.5em 0 0.7em; }
+.markdown-body li { margin: 0.2em 0; padding-left: 0.15rem; }
+.markdown-body li::marker { color: var(--syntax-bullet); }
+
+.markdown-body hr {
+  border: 0;
+  border-top: 1px solid var(--border-strong);
+  margin: 1.4em 0;
+}
+
+.markdown-body blockquote {
+  background: transparent;
+  border-left: 2px solid var(--vn-accent);
+  padding: 0.1em 0 0.1em 0.9em;
+  color: var(--text-muted);
+}
+
+.markdown-body :not(pre) > code {
+  font-size: 0.92em;
+  padding: 0.08em 0.35em;
+  border: 1px solid var(--border);
+}
+
+/* Code: the theme's darker background (Omarchy's T3 Code codeBackground),
+ * framed at 12%. */
+.markdown-body pre {
+  background: var(--om-dark-background);
+  border: 1px solid var(--border);
+  margin: 0.85em 0;
+}
+
+.markdown-body pre code {
+  font-size: 0.75rem;
+  line-height: 1.6;
+  padding: 0.9rem 1rem;
+}
+
+/* The app paints highlighted code on its own surface; let the block's
+ * darker background show through instead. */
+.markdown-body pre .hljs,
+.markdown-body pre code { background: transparent; }
+
+.code-copy-btn {
+  background: var(--surface-2);
+  transition: opacity var(--vn-fast) ease, background-color var(--vn-fast) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .code-copy-btn { opacity: 0; }
+  .markdown-body pre:hover .code-copy-btn { opacity: 1; }
+}
+
+.markdown-body table {
+  font-size: 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+}
+
+.markdown-body th {
+  background: var(--om-fill);
+  font-weight: 700;
+  text-align: left;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 0.45rem 0.7rem;
+}
+
+.markdown-body tr:last-child td { border-bottom: 0; }
+
+/* --------------------------------------------------------- tool calls */
+
+/* Each tool group is a framed row: clearly apart from prose without
+ * shouting. Expanding raises it a step. */
+.tool-group { width: 100%; margin-block: 0.15rem; }
+
+.tool-card,
+.tool-group-card,
+.tool-group > .message.tool {
+  background: var(--vn-tool-bg);
+  border: 1px solid var(--border);
+  transition: background-color var(--vn-fast) ease, border-color var(--vn-fast) ease;
+}
+
+.tool-group > .message.tool .message-body,
+.tool-card .message-body {
+  background: transparent;
+  border: 0;
+}
+
+.tool-group-card:hover,
+.tool-group > .message.tool:hover {
+  background: var(--vn-tool-bg-hover);
+}
+
+.tool-group-card:has(.tool-group-toggle[aria-expanded="true"]),
+.tool-card:has([aria-expanded="true"]) {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  box-shadow: none;
+}
+
+.tool-group-toggle {
+  gap: 0.55rem;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: transparent;
+  transition: color var(--vn-fast) ease;
+}
+
+.tool-group-toggle:hover { background: transparent; color: var(--text); }
+
+.tool-group-summary { font-weight: 500; }
+
+.tool-group-details { border-top: 1px solid var(--border); }
+.tool-group-details:empty { border-top: 0; }
+
+.tool-arrow svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  transition: transform var(--vn-med) var(--vn-ease);
+}
+
+.tool-status { font-size: 0.6875rem; font-variant-numeric: tabular-nums; }
+.tool-status.done { color: var(--accent-green); }
+
+.tool-elapsed {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--vn-text-subtle);
+}
+
+.tool-name { font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600; }
+
+.streaming-indicator {
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
+  padding-left: 0.7rem;
+}
+
+/* A block cursor in the accent while the reply streams. */
+.streaming-indicator::before {
+  content: "";
+  width: 7px;
+  height: 12px;
+  background: var(--vn-accent);
+  flex: none;
+  box-shadow: none;
+  animation: vn-blink 1.1s steps(1, end) infinite;
+}
+
+@keyframes vn-blink { 50% { opacity: 0; } }
+
+/* ------------------------------------------------------------- composer */
+
+.composer { background: transparent; padding-top: 0.25rem; }
+
+/* The in-progress /compact notice is separate from transcript completion
+ * boundaries. Keep the finish local to this composer status, not other
+ * interaction-attention banners or spinner states. */
+.composer .compaction-status {
+  gap: 10px;
+  border: 1px solid var(--om-line);
+  background: var(--bg);
+  color: var(--text-muted);
+  box-shadow: none;
+  font-size: 0.75rem;
+}
+
+.composer .compaction-status-spinner {
+  border-color: var(--border-strong);
+  border-top-color: var(--vn-accent);
+}
+
+/* Floating composer: the thread scrolls underneath it (main.js sets
+ * data-vn-float and --vn-composer-h once it has measured). */
+.main[data-vn-float] > .composer {
+  position: absolute;
+  inset: auto 0 0 0;
+  pointer-events: none;
+  background: linear-gradient(to top,
+    var(--bg) 0%,
+    var(--bg) 40%,
+    transparent 100%);
+}
+
+.main[data-vn-float] > .composer > * { pointer-events: auto; }
+
+.main[data-vn-float] > .chat-scroll {
+  padding-bottom: calc(var(--vn-composer-h, 120px) + 1.25rem);
+  scroll-padding-bottom: calc(var(--vn-composer-h, 120px) + 1rem);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .composer { padding-bottom: 0.9rem; }
+}
+
+/* Omarchy's T3 Code composer: the background, framed at 40%; focused, the
+ * frame turns into a 2px accent border, like Hyprland's active window. */
+.composer-box {
+  /* One height for every toolbar control (buttons, chips, Stop). */
+  --vn-ctl: 30px;
+  /* Toolbar labels collapse by the composer's own width (see below). */
+  container: vn-composer / inline-size;
+  /* Prompt on top, a toolbar of controls beneath. */
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto;
+  align-items: center;
+  column-gap: 2px;
+  background: var(--bg);
+  border: 1px solid var(--om-line);
+  padding: 6px 8px 8px;
+  box-shadow: none;
+  transition: border-color var(--vn-fast) ease, box-shadow var(--vn-fast) ease;
+}
+
+.composer-box > * { grid-column: 1 / -1; }
+.composer-box > .prompt { grid-column: 1 / -1; grid-row: 2; }
+.composer-box > .attach-btn { grid-column: 1; grid-row: 3; margin: 0; }
+.composer-box > .vn-composer-bar { grid-column: 2; grid-row: 3; }
+.composer-box > .composer-actions { grid-column: 3; grid-row: 3; margin: 0; }
+
+.composer-box:focus-within {
+  border-color: var(--vn-accent);
+  box-shadow: var(--vn-ring);
+}
+
+.prompt {
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  padding: 10px 10px 6px;
+  min-height: 44px;
+  caret-color: var(--vn-accent);
+  /* A terminal's block cursor where the browser can draw one. */
+  caret-shape: block;
+}
+
+.prompt::placeholder { color: var(--vn-text-subtle); }
+
+.composer-icon-btn {
+  width: var(--vn-ctl);
+  height: var(--vn-ctl);
+  margin: 0;
+  color: var(--text-muted);
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease;
+}
+
+.composer-icon-btn:hover { background: var(--om-fill-hover); color: var(--text); }
+.composer-icon-btn svg { width: 16px; height: 16px; }
+
+.attach-btn {
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+  box-shadow: none;
+}
+
+.attach-btn:hover,
+.attach-btn[aria-expanded="true"] { border-color: var(--om-line-hover); }
+.attach-btn[aria-expanded="true"] { background: var(--om-fill-selected); }
+
+.composer-actions { gap: 6px; }
+
+/* Send: the accent, with the ink that reads on it. */
+.send-btn {
+  width: var(--vn-ctl);
+  height: var(--vn-ctl);
+  margin: 0;
+  background: var(--vn-accent);
+  color: var(--vn-on-accent);
+  box-shadow: none;
+  transition: opacity var(--vn-fast) ease, background-color var(--vn-fast) ease;
+}
+
+.send-btn:hover:not(:disabled) {
+  opacity: 1;
+  background: var(--accent-hover);
+  box-shadow: none;
+}
+
+.send-btn:disabled { opacity: 0.35; box-shadow: none; }
+.send-btn svg { width: 15px; height: 15px; }
+
+.stop-btn {
+  /* Same height and type as the model chip, framed in red. */
+  border: 1px solid color-mix(in srgb, var(--danger) 70%, transparent);
+  height: var(--vn-ctl);
+  min-height: var(--vn-ctl);
+  padding: 0 12px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--error-text);
+  box-shadow: none;
+  transition: background-color var(--vn-fast) ease;
+}
+
+.stop-btn:hover { background: color-mix(in srgb, var(--danger) 20%, transparent); }
+
+.attachment-chip { background: var(--om-fill); border: 1px solid var(--border); }
+
+/* Composer toolbar (main.js): model + effort chips. */
+.vn-composer-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding-inline: 6px;
+  overflow: hidden;
+}
+
+.vn-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: var(--vn-ctl, 30px);
+  padding: 0 9px;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease,
+    border-color var(--vn-fast) ease;
+}
+
+.vn-chip:hover:not(:disabled),
+.vn-chip[aria-expanded="true"] {
+  background: var(--om-fill-hover);
+  color: var(--text);
+}
+
+.vn-chip:disabled { cursor: default; opacity: 0.55; }
+
+.vn-chip svg { width: 13px; height: 13px; flex: none; }
+.vn-chip .vn-chip-caret { width: 11px; height: 11px; opacity: 0.6; }
+
+.vn-chip-label {
+  flex: none;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Long model ids ellipsize instead of squeezing everything else. */
+.vn-chip-model-label { flex: 0 1 auto; max-width: 18ch; }
+
+/* Combined runtime chip: model · effort, one target, one popover. Framed
+ * like the shell's dropdowns. */
+.vn-chip-runtime {
+  gap: 7px;
+  padding: 0 9px 0 8px;
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+  box-shadow: none;
+}
+
+.vn-chip-runtime:hover:not(:disabled) {
+  border-color: var(--om-line-hover);
+  box-shadow: none;
+}
+
+.vn-chip-runtime[aria-expanded="true"] {
+  background: var(--om-fill-selected);
+  border-color: var(--vn-accent);
+  box-shadow: none;
+}
+
+.vn-chip-runtime[aria-expanded="true"] .vn-chip-caret { transform: rotate(180deg); }
+.vn-chip-caret { transition: transform var(--vn-med) var(--vn-ease); }
+
+.vn-chip-runtime .vn-chip-model-label {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Provider mark: a silhouette tinted with the node accent. */
+.vn-chip-mark {
+  display: inline-flex;
+  flex: none;
+  color: var(--vn-accent);
+}
+
+.vn-chip .vn-chip-mark svg { width: 13px; height: 13px; }
+
+.vn-chip-sep {
+  width: 3px;
+  height: 3px;
+  background: currentColor;
+  opacity: 0.45;
+  flex: none;
+}
+
+.vn-chip-effort-label { color: var(--text-muted); }
+
+/* A brief accent frame when the model or effort changes. */
+.vn-chip-runtime[data-vn-changed] { animation: vn-chip-flash 600ms var(--vn-ease); }
+
+@keyframes vn-chip-flash {
+  0% { border-color: var(--vn-accent); background: var(--vn-accent-soft); }
+  100% { border-color: var(--om-line); background: var(--om-fill); }
+}
+
+.vn-meter {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 11px;
+}
+
+.vn-meter i {
+  display: block;
+  width: 3px;
+  background: currentColor;
+  opacity: 0.25;
+  transition: opacity var(--vn-fast) ease, background-color var(--vn-fast) ease;
+}
+
+.vn-meter i:nth-child(1) { height: 4px; }
+.vn-meter i:nth-child(2) { height: 6px; }
+.vn-meter i:nth-child(3) { height: 8px; }
+.vn-meter i:nth-child(4) { height: 11px; }
+.vn-meter i.on { opacity: 1; background: var(--vn-accent); }
+
+/* Runtime popover anchored above the composer chips. */
+:root[data-vn-runtime-anchor] .chip-popover-runtime {
+  inset: auto auto var(--vn-pop-bottom, 96px) var(--vn-pop-left, 24px) !important;
+  transform-origin: bottom left;
+}
+
+/* ------------------------------------------- menus, popovers, dialogs */
+
+/* Menus, popovers and dialogs: flat, framed 2px in the foreground (Omarchy's
+ * T3 Code theme and its shell's menu). */
+.chip-popover,
+.session-menu,
+.composer-add-menu,
+[role="menu"] {
+  background: var(--bg);
+  border: 2px solid var(--om-frame);
+  box-shadow: none;
+}
+
+.composer-add-menu {
+  padding: 4px;
+  min-width: 210px;
+}
+
+.composer-add-menu button {
+  color: var(--text);
+  font-weight: 450;
+  gap: 0.7rem;
+  padding: 0.5rem 0.6rem;
+}
+
+.composer-add-menu-icon {
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+  color: var(--text-muted);
+}
+
+.composer-add-menu-icon svg { width: 0.95rem; height: 0.95rem; }
+
+.chip-popover-runtime { padding: 0.85rem; min-width: 300px; box-shadow: none; }
+
+.runtime-popover-title { font-size: 0.8125rem; font-weight: 700; }
+.runtime-popover-hint { font-size: 0.6875rem; }
+.runtime-popover-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Selects: framed like the shell's dropdown, one custom chevron everywhere. */
+select:not([multiple], [size]),
+.runtime-popover-select,
+.settings-select {
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 34px;
+  padding: 0.45rem 2.2rem 0.45rem 0.7rem;
+  border: 1px solid var(--om-line);
+  background-color: var(--om-fill);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238d8d96' stroke-width='2' stroke-linecap='square' stroke-linejoin='miter'%3E%3Cpath d='m8 10 4-4 4 4'/%3E%3Cpath d='m8 14 4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 14px 14px;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 450;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: border-color var(--vn-fast) ease, background-color var(--vn-fast) ease;
+}
+
+select:not([multiple], [size]):hover:not(:disabled),
+.runtime-popover-select:hover:not(:disabled),
+.settings-select:hover:not(:disabled) {
+  border-color: var(--om-line-hover);
+  background-color: var(--om-fill-hover);
+}
+
+select:not([multiple], [size]):focus,
+.runtime-popover-select:focus,
+.settings-select:focus {
+  outline: none;
+  border-color: var(--vn-accent);
+  box-shadow: var(--vn-ring);
+}
+
+select:not([multiple], [size]):disabled { cursor: default; opacity: 0.55; }
+
+/* Compact chip-style selects (header chips) keep their slim footprint. */
+select.chip-trigger {
+  min-height: 0;
+  padding: 0.2rem 1.4rem 0.2rem 0.5rem;
+  border-color: transparent;
+  background-color: transparent;
+  background-position: right 0.3rem center;
+  background-size: 12px 12px;
+  font-size: 0.6875rem;
+}
+
+/* Newer hosts wrap selects in .control-select, which draws its own chevron. */
+.control-select > select { background-image: none; }
+
+select option,
+select optgroup {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* The app's switches, drawn as Omarchy's. */
+.runtime-popover-fast-toggle,
+.toggle-switch-track {
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+  box-shadow: none;
+}
+
+/* The border takes the place of a pixel of the app's padding. */
+.toggle-switch-track { padding: 1px; }
+
+.runtime-popover-fast-toggle span,
+.toggle-switch-thumb {
+  background: color-mix(in srgb, var(--om-foreground) 72%, var(--om-background));
+  box-shadow: none;
+}
+
+.runtime-popover-fast-toggle[aria-checked="true"],
+.toggle-switch-input:checked + .toggle-switch-track {
+  border-color: transparent;
+  background: var(--om-fill-selected);
+}
+
+.runtime-popover-fast-toggle span { transition: transform var(--vn-fast) var(--vn-ease), background var(--vn-fast); }
+.runtime-popover-fast-toggle[aria-checked="true"] span,
+.toggle-switch-input:checked + .toggle-switch-track .toggle-switch-thumb { background: var(--om-bright-foreground); }
+
+.toggle-switch-input:focus-visible + .toggle-switch-track { outline: 2px solid var(--vn-accent); outline-offset: 2px; }
+
+/* MCP row in the runtime popover: a framed button like the composer chips. */
+.runtime-mcp-row { border-top-color: var(--border); }
+.runtime-mcp-manage {
+  gap: 4px;
+  height: 28px;
+  padding: 0 8px 0 10px;
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+  box-shadow: none;
+  color: var(--text);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color var(--vn-fast) ease, border-color var(--vn-fast) ease;
+}
+.runtime-mcp-manage svg { width: 13px; height: 13px; color: var(--text-muted); }
+.runtime-mcp-manage:hover {
+  background: var(--om-fill-hover);
+  border-color: var(--om-line-hover);
+  box-shadow: none;
+}
+.runtime-mcp-manage:focus-visible { outline: none; border-color: var(--vn-accent); box-shadow: var(--vn-ring); }
+
+/* --- resize handles ---------------------------------------------------- */
+
+/* The sidebar and diff panel edges: an accent hairline that waits a beat
+ * on hover (so passing the pointer over it doesn't flash) and holds while
+ * dragging, like Hyprland's resize-on-border. */
+.panel-resize-handle::after {
+  width: 2px;
+  margin-left: -0.5px;
+  background: var(--vn-accent);
+  opacity: 0;
+  transition: opacity var(--vn-fast) ease;
+}
+.panel-resize-handle[data-edge="right"]::after { margin: 0 -0.5px 0 0; }
+.panel-resize-handle:hover::after,
+.panel-resize-handle:focus-visible::after,
+.panel-resize-handle[data-resizing]::after {
+  background: var(--vn-accent);
+  opacity: 0.9;
+}
+.panel-resize-handle:hover::after { transition-delay: 150ms; }
+.panel-resize-handle[data-resizing]::after { opacity: 1; transition-delay: 0s; }
+.panel-resize-handle:focus-visible { outline: none; }
+
+/* Menu rows: Omarchy's selected row is a faint fill with the text in the
+ * accent. */
+[role="menu"] button,
+.session-menu button,
+.composer-add-menu button,
+.chip-popover-item {
+  font-size: 0.75rem;
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease;
+}
+
+[role="menu"] button:hover,
+[role="menu"] button:focus-visible,
+.session-menu button:hover,
+.session-menu button:focus-visible,
+.composer-add-menu button:hover,
+.composer-add-menu button:focus-visible,
+.chip-popover-item:hover {
+  background: var(--om-fill-hover);
+  color: var(--vn-accent-text);
+}
+
+.chip-popover-item[aria-selected="true"]::before { color: var(--vn-accent); }
+
+.modal-overlay {
+  background: var(--om-scrim);
+}
+
+.modal {
+  background: var(--bg);
+  border: 2px solid var(--om-frame);
+  box-shadow: none;
+  padding: 1.25rem;
+}
+
+.modal.widgets-modal,
+.modal.approval-modal { padding: 0; }
+
+.modal h2 { font-size: 0.875rem; font-weight: 700; letter-spacing: 0; }
+
+.modal input:not([type="radio"], [type="checkbox"]),
+.modal textarea {
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+}
+
+.modal input:not([type="radio"], [type="checkbox"]):focus,
+.modal textarea:focus {
+  outline: none;
+  border-color: var(--vn-accent);
+  box-shadow: var(--vn-ring);
+}
+
+/* Settings tabs: a button group of separate framed buttons. */
+.settings-tabs {
+  display: inline-flex;
+  gap: 6px;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border-bottom: 0;
+  width: auto;
+  max-width: 100%;
+  margin-bottom: 1.1rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.settings-tabs [role="tab"] {
+  flex: none;
+  white-space: nowrap;
+  border: 1px solid var(--om-line);
+  padding: 0.38rem 0.85rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--om-fill);
+  transition: background-color var(--vn-fast) ease, border-color var(--vn-fast) ease,
+    color var(--vn-fast) ease;
+}
+
+.settings-tabs [role="tab"]:hover {
+  background: var(--om-fill-hover);
+  border-color: var(--om-line-hover);
+  color: var(--text);
+}
+
+.settings-tabs [role="tab"][aria-selected="true"] {
+  background: var(--om-fill-selected);
+  border-color: transparent;
+  color: var(--accent-strong);
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.settings-tabs [role="tab"]::after { display: none; }
+
+/* The desktop dialog lists its tabs down a sidebar instead. */
+@media (min-width: 720px) {
+  .settings-modal .settings-tabs {
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+.widget-card {
+  border: 1px solid var(--border);
+  transition: background-color var(--vn-fast) ease, border-color var(--vn-fast) ease;
+}
+
+.widget-card:hover,
+.widget-card:focus-within {
+  border-color: var(--om-line-hover);
+  background: var(--om-fill-hover);
+  box-shadow: none;
+}
+
+/* Notifications are framed in the accent, as Omarchy's are by the active
+ * window's border (the app's success, error or info colour). */
+.toast {
+  background: var(--bg);
+  border: 2px solid var(--toast-accent, var(--vn-accent));
+  box-shadow: none;
+}
+
+/* Flat everywhere else the app draws a shadow of its own. */
+.chip-popover-runtime,
+.chip-popover-project,
+.diff-queue-bar,
+.diff-sidebar.open,
+.plan-panel.open,
+.plan-sheet,
+.sidebar.open,
+.drawer,
+.startup-card,
+.diff-comment-send-menu,
+.diff-comment-panel,
+.diff-comment-send-split,
+.diff-comment-cancel,
+.diff-comment-send,
+.diff-comment-send-more,
+.hub-agent-row.is-dragging .hub-agent-link,
+.session-row.is-dragging > .session-btn,
+.project-group.is-dragging,
+.worktree-row:hover,
+.worktree-row:focus-within {
+  box-shadow: none;
+}
+
+.diff-sidebar.open,
+.plan-panel.open { border-left: 1px solid var(--border); }
+
+.hub-agent-row.is-dragging .hub-agent-link,
+.session-row.is-dragging > .session-btn,
+.project-group.is-dragging { outline: 2px solid var(--vn-accent); }
+
+.startup-card,
+.drawer,
+.diff-comment-send-menu { border: 2px solid var(--om-frame); }
+
+/* ----------------------------------------------------------------- shell */
+
+.shell-overlay {
+  background: var(--vn-term-bg);
+  color: var(--vn-term-fg);
+}
+
+.shell-overlay.shell-layout-bottom,
+.shell-overlay.shell-layout-right {
+  border-color: var(--om-line);
+  box-shadow: none;
+}
+
+.shell-overlay-header {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  min-height: 50px;
+}
+
+.shell-title-row h1 { font-size: 0.8125rem; font-weight: 700; letter-spacing: 0; }
+
+.shell-prompt-mark {
+  background: transparent;
+  border: 1px solid var(--vn-accent);
+  color: var(--vn-accent);
+}
+
+.shell-status { color: var(--text-muted); font-weight: 500; }
+.shell-status-running { color: var(--accent-green); }
+.shell-status-running .shell-status-dot {
+  background: var(--accent-green);
+  box-shadow: none;
+  animation: vn-breathe 2s ease-in-out infinite;
+}
+.shell-status-error,
+.shell-status-exited { color: var(--danger); }
+.shell-status-error .shell-status-dot,
+.shell-status-exited .shell-status-dot { background: var(--danger); }
+
+.shell-cwd { color: var(--vn-text-subtle); }
+
+.shell-layout-picker {
+  display: inline-flex;
+  gap: 4px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.shell-layout-button {
+  color: var(--text-muted);
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease;
+}
+
+.shell-layout-button:hover { color: var(--text); background: var(--om-fill-hover); border-color: var(--om-line-hover); }
+
+.shell-layout-button.is-active {
+  color: var(--accent-strong);
+  background: var(--om-fill-selected);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.shell-overlay-actions .btn {
+  color: var(--text);
+  background: var(--om-fill);
+  border: 1px solid var(--om-line);
+  min-height: 30px;
+  font-weight: 600;
+  transition: background-color var(--vn-fast) ease, border-color var(--vn-fast) ease;
+}
+
+.shell-overlay-actions .btn:hover { background: var(--om-fill-hover); border-color: var(--om-line-hover); color: var(--text); }
+
+.shell-overlay-actions .shell-back {
+  color: var(--vn-on-accent);
+  background: var(--vn-accent);
+  border-color: transparent;
+}
+
+.shell-overlay-actions .shell-back:hover {
+  color: var(--vn-on-accent);
+  background: var(--accent-hover);
+  border-color: transparent;
+}
+
+.shell-overlay-actions .shell-end {
+  color: var(--error-text);
+  border-color: color-mix(in srgb, var(--danger) 70%, transparent);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+.shell-overlay-actions .shell-end:hover {
+  color: var(--error-text);
+  background: color-mix(in srgb, var(--danger) 18%, transparent);
+  border-color: var(--danger);
+}
+
+.shell-command-notice,
+.shell-collaboration-error,
+.shell-error { font-size: 0.6875rem; }
+
+.shell-dock-resizer::after { background: var(--vn-accent); }
+
+.shell-terminal,
+.shell-terminal .xterm-viewport,
+.shell-terminal .xterm-screen {
+  background: var(--vn-term-bg) !important;
+}
+
+/* Omarchy's terminals: 14px of padding, a solid block cursor. */
+.shell-terminal .xterm { padding: 14px 14px 10px; }
+.shell-terminal .xterm-viewport { scrollbar-color: var(--om-muted) transparent; }
+.shell-terminal-pending { color: var(--text-muted); }
+
+.shell-terminal .xterm .xterm-rows { color: var(--vn-term-fg) !important; }
+.shell-terminal .xterm .xterm-rows .xterm-dim {
+  color: color-mix(in srgb, var(--vn-term-fg) 55%, transparent) !important;
+}
+.shell-terminal .xterm .xterm-selection div { background-color: var(--vn-term-sel) !important; }
+.shell-terminal .xterm .xterm-rows .xterm-cursor.xterm-cursor-bar {
+  box-shadow: 2px 0 0 var(--vn-term-cursor) inset !important;
+}
+.shell-terminal .xterm .xterm-rows .xterm-cursor.xterm-cursor-block {
+  background-color: var(--vn-term-cursor) !important;
+  color: var(--vn-term-bg) !important;
+}
+.shell-terminal .xterm .xterm-rows .xterm-cursor.xterm-cursor-underline {
+  border-bottom-color: var(--vn-term-cursor) !important;
+}
+.shell-terminal .xterm .xterm-fg-257 { color: var(--vn-term-bg) !important; }
+.shell-terminal .xterm .xterm-bg-257 { background-color: var(--vn-term-fg) !important; }
+
+.shell-terminal .xterm .xterm-fg-0 { color: var(--vn-ansi-0) !important; }
+.shell-terminal .xterm .xterm-fg-1 { color: var(--vn-ansi-1) !important; }
+.shell-terminal .xterm .xterm-fg-2 { color: var(--vn-ansi-2) !important; }
+.shell-terminal .xterm .xterm-fg-3 { color: var(--vn-ansi-3) !important; }
+.shell-terminal .xterm .xterm-fg-4 { color: var(--vn-ansi-4) !important; }
+.shell-terminal .xterm .xterm-fg-5 { color: var(--vn-ansi-5) !important; }
+.shell-terminal .xterm .xterm-fg-6 { color: var(--vn-ansi-6) !important; }
+.shell-terminal .xterm .xterm-fg-7 { color: var(--vn-ansi-7) !important; }
+.shell-terminal .xterm .xterm-fg-8 { color: var(--vn-ansi-8) !important; }
+.shell-terminal .xterm .xterm-fg-9 { color: var(--vn-ansi-9) !important; }
+.shell-terminal .xterm .xterm-fg-10 { color: var(--vn-ansi-10) !important; }
+.shell-terminal .xterm .xterm-fg-11 { color: var(--vn-ansi-11) !important; }
+.shell-terminal .xterm .xterm-fg-12 { color: var(--vn-ansi-12) !important; }
+.shell-terminal .xterm .xterm-fg-13 { color: var(--vn-ansi-13) !important; }
+.shell-terminal .xterm .xterm-fg-14 { color: var(--vn-ansi-14) !important; }
+.shell-terminal .xterm .xterm-fg-15 { color: var(--vn-ansi-15) !important; }
+
+.shell-terminal .xterm .xterm-bg-0 { background-color: var(--vn-ansi-0) !important; }
+.shell-terminal .xterm .xterm-bg-1 { background-color: var(--vn-ansi-1) !important; }
+.shell-terminal .xterm .xterm-bg-2 { background-color: var(--vn-ansi-2) !important; }
+.shell-terminal .xterm .xterm-bg-3 { background-color: var(--vn-ansi-3) !important; }
+.shell-terminal .xterm .xterm-bg-4 { background-color: var(--vn-ansi-4) !important; }
+.shell-terminal .xterm .xterm-bg-5 { background-color: var(--vn-ansi-5) !important; }
+.shell-terminal .xterm .xterm-bg-6 { background-color: var(--vn-ansi-6) !important; }
+.shell-terminal .xterm .xterm-bg-7 { background-color: var(--vn-ansi-7) !important; }
+.shell-terminal .xterm .xterm-bg-8 { background-color: var(--vn-ansi-8) !important; }
+
+/* ===================================================================
+ * Thread extras (thread.js)
+ * =================================================================== */
+
+/* --- code block header ------------------------------------------- */
+
+.markdown-body pre[data-vn-code] { padding-top: 0; }
+.markdown-body pre[data-vn-code] > code { padding-top: 0.75rem; }
+
+.vn-code-head {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 44px 0 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--om-fill);
+  font-family: var(--vn-font-sans);
+  user-select: none;
+}
+
+.vn-code-lang {
+  margin-right: auto;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--text-muted);
+  text-transform: lowercase;
+}
+
+.vn-code-btn {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--vn-text-subtle);
+  cursor: pointer;
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease;
+}
+
+.vn-code-btn svg { width: 13px; height: 13px; }
+.vn-code-btn:hover { background: var(--om-fill-hover); color: var(--text); }
+.vn-code-btn[aria-pressed="true"] { color: var(--vn-accent-text); background: var(--om-fill-selected); }
+
+/* The app's copy button joins the header row, always visible. */
+.markdown-body pre[data-vn-code] .code-copy-btn {
+  top: 3px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  opacity: 1;
+  border: 0;
+  background: transparent;
+  color: var(--vn-text-subtle);
+}
+
+.markdown-body pre[data-vn-code] .code-copy-btn:hover { background: var(--om-fill-hover); color: var(--text); }
+
+.markdown-body pre[data-vn-wrap] code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* --- tool timeline ------------------------------------------------- */
+
+.tool-group-toggle[data-vn-worked]::after {
+  content: attr(data-vn-worked);
+  order: 1;
+  margin-left: auto;
+  font-size: 0.6875rem;
+  color: var(--vn-text-subtle);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tool-group-toggle .tool-status { order: 2; }
+.tool-group-toggle[data-vn-worked] .tool-status { margin-left: 0.6rem; }
+
+/* Back-to-back groups read as one block. */
+.tool-group + .tool-group { margin-top: -0.55rem; }
+
+/* --- thought rows ------------------------------------------------------ */
+
+/* Reasoning reads like a tool card's header (same type, same colour-only
+ * hover), with an accent rule down the expanded body. */
+.thought-toggle {
+  padding: 0.3rem 0.7rem 0.3rem var(--thought-inset);
+  font-size: 0.75rem;
+  transition: color var(--vn-fast) ease;
+}
+
+@media (hover: hover) {
+  .thought-toggle:hover { background: transparent; color: var(--text); }
+}
+
+.thought-toggle:focus-visible { outline: none; box-shadow: var(--vn-ring); }
+
+.thought-arrow svg {
+  width: 0.75rem;
+  height: 0.75rem;
+  transition: transform var(--vn-med) var(--vn-ease);
+}
+
+.thought-prefix { font-weight: 600; font-style: normal; }
+
+.thought-body {
+  border-left-color: var(--vn-accent);
+  font-size: 0.75rem;
+  line-height: 1.65;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* While the model is thinking, a soft sheen runs across the label. */
+.message.thought.live .thought-label {
+  background: linear-gradient(90deg, var(--text-muted) 0%, var(--accent-strong) 45%,
+      var(--text-muted) 90%) 0 0 / 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: vn-thought-sheen 2.4s linear infinite;
+}
+
+@keyframes vn-thought-sheen { to { background-position: -200% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .message.thought.live .thought-label { animation: none; color: var(--text); background: none; }
+}
+
+:root[data-vn-type="comfortable"] .thought-toggle { font-size: 0.8125rem; }
+
+.tool-group-details.open { padding: 0.35rem 0 0.4rem; }
+
+.tool-group-entry {
+  position: relative;
+  gap: 0.6rem;
+  padding: 0 0.75rem;
+}
+
+/* The app aligns entries on the text baseline for its inline glyph; the
+ * 22px icon tile is placed from the top instead (margin-top below). */
+.tool-group-entry[data-vn-tool] { align-items: flex-start; }
+.tool-group-entry[data-vn-tool] .tool-entry-icon > :not(style) { display: none; }
+
+/* Rail connecting the steps. */
+.tool-group-entry:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: calc(0.75rem + 10.5px);
+  top: 30px;
+  bottom: -5px;
+  width: 1px;
+  background: var(--border-strong);
+}
+
+.tool-group-entry[data-vn-tool] .tool-entry-icon {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  margin-top: 5px;
+  padding: 0;
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+  box-shadow: none;
+  font-size: 0;
+  color: var(--text-muted);
+}
+
+.tool-group-entry[data-vn-tool] .tool-entry-icon::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  background: currentColor;
+  -webkit-mask: var(--vn-tool-glyph) center / contain no-repeat;
+  mask: var(--vn-tool-glyph) center / contain no-repeat;
+}
+
+.tool-group-entry:has(.tool-status.done) .tool-entry-icon { color: var(--text-muted); }
+.tool-group-entry:has(.tool-status.error) .tool-entry-icon { color: var(--danger); border-color: var(--danger); }
+.tool-group-entry:not(:has(.tool-status.done, .tool-status.error)) .tool-entry-icon {
+  color: var(--vn-accent);
+  border-color: var(--vn-accent);
+  box-shadow: none;
+}
+
+.tool-group-entry[data-vn-tool="terminal"] { --vn-tool-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 7 5 5-5 5M12 18h7'/%3E%3C/svg%3E"); }
+.tool-group-entry[data-vn-tool="file"] { --vn-tool-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z'/%3E%3Cpath d='M14 3v5h5M9 13h6M9 17h4'/%3E%3C/svg%3E"); }
+.tool-group-entry[data-vn-tool="edit"] { --vn-tool-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z'/%3E%3C/svg%3E"); }
+.tool-group-entry[data-vn-tool="search"] { --vn-tool-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m20 20-4-4'/%3E%3C/svg%3E"); }
+.tool-group-entry[data-vn-tool="globe"] { --vn-tool-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18'/%3E%3C/svg%3E"); }
+.tool-group-entry[data-vn-tool="image"] { --vn-tool-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='14' rx='2.5'/%3E%3Cpath d='m3 16 5-5 5 5 3-3 5 5'/%3E%3C/svg%3E"); }
+.tool-group-entry[data-vn-tool="agent"] { --vn-tool-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 17 17 7M9 7h8v8'/%3E%3C/svg%3E"); }
+.tool-group-entry[data-vn-tool="ask"] { --vn-tool-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M9 9a3 3 0 1 1 4 2.8c-.6.3-1 .9-1 1.6V15M12 19h.01'/%3E%3C/svg%3E"); }
+.tool-group-entry[data-vn-tool="folder"] { --vn-tool-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linejoin='round'%3E%3Cpath d='M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/%3E%3C/svg%3E"); }
+.tool-group-entry[data-vn-tool="memory"] { --vn-tool-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linejoin='round'%3E%3Cpath d='M6 4h9l3 3v13H6z'/%3E%3Cpath d='M9 4v5h6V4'/%3E%3C/svg%3E"); }
+.tool-group-entry[data-vn-tool="skill"] { --vn-tool-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Cpath d='M12 2.5 14.2 9.8 21.5 12l-7.3 2.2L12 21.5l-2.2-7.3L2.5 12l7.3-2.2z'/%3E%3C/svg%3E"); }
+.tool-group-entry[data-vn-tool="dot"] { --vn-tool-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Crect x='7.5' y='7.5' width='9' height='9'/%3E%3C/svg%3E"); }
+
+.tool-group-entry-body .tool-toggle { padding: 0.45rem 0.2rem; gap: 0.5rem; }
+.tool-group-entry-body .tool-toggle:hover { background: transparent; }
+.tool-group-entry-body .tool-toggle:hover .tool-name { color: var(--text); }
+.tool-name { color: var(--text-muted); }
+.tool-summary { color: var(--vn-text-subtle); font-size: 0.6875rem; }
+
+/* --- user message actions ------------------------------------------- */
+
+.message.user { position: relative; }
+
+.vn-user-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.vn-msg-btn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--vn-text-subtle);
+  cursor: pointer;
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease;
+}
+
+.vn-msg-btn svg { width: 14px; height: 14px; }
+.vn-msg-btn:hover { background: var(--om-fill-hover); color: var(--text); }
+.vn-msg-btn.is-done { color: var(--accent-green); }
+
+@media (hover: hover) and (pointer: fine) {
+  /* Desktop: sit beside the bubble, revealed on hover. */
+  .vn-user-actions {
+    position: absolute;
+    right: calc(100% + 4px);
+    bottom: 1.35rem;
+    opacity: 0;
+    transition: opacity var(--vn-fast) ease;
+  }
+
+  .message.user:hover .vn-user-actions,
+  .vn-user-actions:focus-within {
+    opacity: 1;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .vn-user-actions { align-self: flex-end; margin-top: -2px; }
+  .vn-msg-btn { width: 34px; height: 34px; }
+}
+
+/* --- jump to latest ------------------------------------------------------- */
+
+.vn-jump {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--vn-composer-h, 130px) + 14px);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px 0 8px;
+  border: 1px solid var(--om-line);
+  background: var(--bg);
+  box-shadow: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 6px);
+  transition: opacity var(--vn-fast) ease, transform var(--vn-med) var(--vn-ease),
+    background-color var(--vn-fast) ease;
+}
+
+.vn-jump[data-show] {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.vn-jump svg { width: 13px; height: 13px; }
+.vn-jump:hover { background: var(--surface-2); }
+
+.vn-jump[data-new] {
+  background: var(--vn-accent);
+  border-color: transparent;
+  color: var(--vn-on-accent);
+}
+
+.vn-jump[data-new] .vn-jump-icon { animation: vn-nudge 1.4s var(--vn-ease) infinite; }
+
+@keyframes vn-nudge {
+  0%, 100% { transform: translateY(-1px); }
+  50% { transform: translateY(2px); }
+}
+
+/* --- empty state ------------------------------------------------------------ */
+
+.empty-chat { align-content: center; }
+.empty-chat h2 { font-size: 1.125rem; font-weight: 700; letter-spacing: 0; color: var(--accent-strong); }
+.empty-chat > p { font-size: 0.8125rem; color: var(--text-muted); }
+
+.vn-empty {
+  display: grid;
+  gap: 1.6rem;
+  width: min(600px, 100%);
+  margin-top: 1.4rem;
+  text-align: left;
+}
+
+.vn-starters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Starters are framed buttons; the pointer brings the accent. */
+.vn-starter {
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--vn-fast) ease, border-color var(--vn-fast) ease,
+    color var(--vn-fast) ease;
+}
+
+.vn-starter:hover {
+  border-color: var(--vn-accent);
+  background: var(--om-fill-hover);
+  color: var(--vn-accent-text);
+}
+
+.vn-recents-wrap { display: grid; gap: 8px; }
+.vn-starters[hidden],
+.vn-recents-wrap[hidden] { display: none; }
+
+.vn-empty-label {
+  padding-left: 2px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--vn-text-subtle);
+}
+
+.vn-recents {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.vn-recent {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--border);
+  background: var(--vn-tool-bg);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--vn-fast) ease, border-color var(--vn-fast) ease;
+}
+
+.vn-recent:hover {
+  border-color: var(--vn-accent);
+  background: var(--om-fill-hover);
+  box-shadow: none;
+}
+
+.vn-recent-title {
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.vn-recent-meta {
+  overflow: hidden;
+  font-size: 0.6875rem;
+  color: var(--vn-text-subtle);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+@media (width <= 560px) {
+  .vn-recents { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* --- home (home.js) ----------------------------------------------------- */
+
+/* The new-chat screen shows the agent the way Omarchy's fastfetch shows a
+ * machine: a mark beside framed sections whose keys hang off tree glyphs in
+ * a section colour (agent green, workspace blue), rules in the theme's muted
+ * grey, then a prompt line. It stands in for the app's heading and tagline. */
+.empty-chat:has(> .vn-home) > h2,
+.empty-chat:has(> .vn-home) > p { display: none; }
+
+.vn-home {
+  display: grid;
+  justify-items: center;
+  gap: 1.75rem;
+  width: min(720px, 100%);
+  margin: 0 auto 0.4rem;
+}
+
+.vn-fetch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.25rem;
+  max-width: 100%;
+}
+
+.vn-fetch-logo {
+  flex: none;
+  color: var(--vn-accent);
+}
+
+.vn-fetch-logo svg { display: block; width: 91px; height: 65px; }
+
+/* Box-drawing joins only at the font's own cell height, as in a terminal:
+ * line-height normal is that height for whichever monospace font draws it. */
+.vn-fetch-info {
+  display: grid;
+  gap: 1.2em;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--text);
+  font-size: 12px;
+  line-height: normal;
+  text-align: left;
+}
+
+.vn-fetch-section { max-width: 100%; }
+
+.vn-fetch-rule {
+  overflow: hidden;
+  color: var(--om-muted);
+  white-space: pre;
+}
+
+.vn-fetch-list { display: grid; margin: 0; }
+
+.vn-fetch-row { display: flex; min-width: 0; }
+
+.vn-fetch-row dt {
+  flex: none;
+  width: 12ch;
+  font-weight: 600;
+  white-space: pre;
+}
+
+.vn-fetch-green dt { color: var(--om-green); }
+.vn-fetch-blue dt { color: var(--om-blue); }
+
+.vn-fetch-row dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Status: the sidebar's own states, each a way into its first chat. */
+.vn-fetch-status { display: inline-flex; flex-wrap: wrap; gap: 0 3ch; }
+
+.vn-fetch-state {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+}
+
+button.vn-fetch-state { color: var(--text); cursor: pointer; }
+button.vn-fetch-state:hover { color: var(--vn-accent-text); text-decoration: underline; text-underline-offset: 0.2em; }
+
+.vn-fetch-state-waiting .vn-fetch-dot { color: var(--accent-amber); }
+.vn-fetch-state-running .vn-fetch-dot { color: var(--accent-green); }
+.vn-fetch-state-unread .vn-fetch-dot { color: var(--vn-accent); }
+.vn-fetch-state:not(button) .vn-fetch-dot { color: var(--om-muted); }
+
+/* The theme line ends in a dot of each palette colour, as fastfetch's does. */
+.vn-fetch-dots { letter-spacing: 0.1ch; }
+.vn-fetch-dot-fg { color: var(--om-foreground); }
+.vn-fetch-dot-cyan { color: var(--om-cyan); }
+.vn-fetch-dot-magenta { color: var(--om-magenta); }
+.vn-fetch-dot-blue { color: var(--om-blue); }
+.vn-fetch-dot-yellow { color: var(--om-yellow); }
+.vn-fetch-dot-green { color: var(--om-green); }
+.vn-fetch-dot-red { color: var(--om-red); }
+.vn-fetch-dot-accent { color: var(--om-accent); }
+
+/* A prompt, and a block cursor that blinks like a terminal's. */
+.vn-home-line {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+/* Omarchy's shell prompt: a bold cyan ❯. */
+.vn-home-caret { color: var(--om-cyan); font-weight: 800; }
+
+.vn-home-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  margin-left: 0.3ch;
+  vertical-align: -0.18em;
+  background: var(--om-bright-foreground);
+  animation: vn-blink 1.1s steps(1, end) infinite;
+}
+
+.vn-home-keys {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1.4rem;
+  order: 10;
+  margin: 1.4rem 0 0;
+  color: var(--vn-text-subtle);
+  font-size: 0.6875rem;
+}
+
+.vn-home-key { display: inline-flex; align-items: center; gap: 6px; }
+.vn-home-key .vn-kbd { margin: 0; }
+
+@media (width <= 640px) {
+  .vn-fetch { flex-direction: column; gap: 1rem; }
+  .vn-fetch-logo svg { width: 70px; height: 50px; }
+  .vn-home-line { font-size: 1.05rem; }
+  .vn-home-keys { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vn-home-cursor { animation: none; }
+}
+
+/* --- sidebar brand ------------------------------------------------------- */
+
+/* The agent's name wears a prompt mark cut out of the accent (the node's own
+ * under a Hub, so each agent's sidebar matches its tile and tab icon). */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand::before {
+  content: "";
+  flex: none;
+  width: 18px;
+  height: 18px;
+  background: var(--vn-accent);
+  -webkit-mask:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.8' stroke-linecap='square'%3E%3Cpath d='m5 7 5 5-5 5M12 18h7'/%3E%3C/svg%3E") center / 13px no-repeat,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.8' stroke-linecap='square'%3E%3Cpath d='m5 7 5 5-5 5M12 18h7'/%3E%3C/svg%3E") center / 13px no-repeat exclude,
+    linear-gradient(#000 0 0);
+}
+
+/* ===================================================================
+ * Composer extras (composer.js)
+ * =================================================================== */
+
+.vn-composer-bar { overflow: visible; }
+
+/* --- context ring --------------------------------------------------- */
+
+.vn-context {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--vn-ctl, 30px);
+  margin-left: auto;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--vn-text-subtle);
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease;
+}
+
+.vn-context[hidden] { display: none; }
+
+/* "Compact" appears beside the ring once context is nearly full. */
+.vn-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: var(--vn-ctl, 30px);
+  margin-left: auto;
+  padding: 0 10px 0 8px;
+  border: 1px solid color-mix(in srgb, var(--danger) 70%, transparent);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  box-shadow: none;
+  color: var(--error-text);
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  animation: vn-compact-in var(--vn-med) var(--vn-ease) both;
+  transition: background-color var(--vn-fast) ease;
+}
+
+.vn-compact[hidden] { display: none; }
+.vn-compact svg { width: 13px; height: 13px; flex: none; }
+.vn-compact:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 20%, transparent); }
+.vn-compact:disabled { cursor: default; opacity: 0.6; }
+.vn-compact:not([hidden]) + .vn-context { margin-left: 2px; }
+
+@keyframes vn-compact-in {
+  from { opacity: 0; transform: scale(0.97); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vn-compact { animation: none; }
+}
+.vn-context:hover,
+.vn-context:focus-visible,
+.vn-context[data-pinned] { background: var(--om-fill-hover); color: var(--text); }
+
+.vn-context-ring {
+  width: 16px;
+  height: 16px;
+  transform: rotate(-90deg);
+}
+
+.vn-context-ring circle {
+  fill: none;
+  stroke-width: 2.6;
+}
+
+.vn-context-track { stroke: var(--border-strong); }
+
+.vn-context-fill {
+  stroke: var(--vn-accent);
+  stroke-linecap: butt;
+  transition: stroke-dashoffset 500ms var(--vn-ease), stroke 180ms ease;
+}
+
+.vn-context[data-level="warn"] .vn-context-fill { stroke: var(--accent-amber); }
+.vn-context[data-level="critical"] .vn-context-fill { stroke: var(--danger); }
+.vn-context[data-level="critical"] { color: var(--error-text); }
+.vn-context[data-level="unknown"] .vn-context-fill { stroke: transparent; }
+
+/* The tip is an Omarchy tooltip: raised, framed at 40%, no shadow. */
+.vn-context-tip {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 10px);
+  z-index: 5;
+  width: max-content;
+  max-width: 280px;
+  padding: 5px 9px;
+  border: 1px solid var(--om-line);
+  background: var(--surface);
+  box-shadow: none;
+  color: var(--text);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  white-space: normal;
+  text-align: left;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(3px);
+  transition: opacity var(--vn-fast) ease, transform var(--vn-med) var(--vn-ease);
+}
+
+.vn-context:hover .vn-context-tip,
+.vn-context:focus-visible .vn-context-tip,
+.vn-context[data-pinned] .vn-context-tip { opacity: 1; transform: none; }
+
+/* The ring sits before other toolbar controls. On narrow screens, use the
+ * whole toolbar as the tooltip's containing block so its text stays on screen. */
+@media (max-width: 480px) {
+  .vn-composer-bar { position: relative; }
+  .vn-context { position: static; }
+  .vn-context-tip {
+    right: 8px;
+    max-width: min(280px, calc(100% - 16px));
+  }
+}
+
+/* A click opens the app's context card (composer.js), so the ring is a real
+ * button: pointer, selected while its card is open, tip out of the way. */
+.vn-context { cursor: pointer; }
+.vn-context[aria-expanded="true"] {
+  background: var(--om-fill-selected);
+  color: var(--text);
+}
+.vn-context[aria-expanded="true"] .vn-context-tip { opacity: 0; }
+
+/* --- context card ----------------------------------------------------- */
+
+/* The app's header meter duplicates the ring, so it stays in the DOM (it
+ * owns the card) but out of sight, like the header model picker. */
+:root[data-vn-composer-bar] .main-header .context-meter {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Without the composer bar the header meter shows, in the ring's type. */
+.context-meter.header-action {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  gap: 6px;
+  color: var(--vn-text-subtle);
+}
+.context-meter .context-meter-detail { font-weight: 500; }
+
+/* Calm readings use the accent, like the ring; amber and red come from the
+ * app's tones. */
+.context-meter:not([data-tone="warm"], [data-tone="hot"]),
+.context-popover:not([data-tone="warm"], [data-tone="hot"]) {
+  --context-tone: var(--vn-accent);
+}
+.context-meter[data-tone="calm"] { --context-tone-text: var(--vn-text-subtle); }
+
+:root[data-vn-composer-bar] .chip-popover.context-popover {
+  inset: auto var(--vn-ctx-right, 24px) var(--vn-ctx-bottom, 96px) auto !important;
+  transform-origin: bottom right;
+}
+
+.chip-popover.context-popover { padding: 0.85rem; }
+.context-ring-label { font-size: 16px; font-weight: 700; }
+.context-ring-track { stroke: var(--border-strong); }
+.context-popover-figures { font-size: 0.75rem; }
+.context-popover-figures dd { font-weight: 700; }
+.context-bar { height: 6px; background: var(--om-fill-hover); }
+.context-bar-scale { font-size: 0.625rem; }
+.context-bar-scale-mark { font-weight: 600; }
+.context-popover-note { font-size: 0.6875rem; }
+.context-popover-actions .btn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+/* --- responsive toolbar ---------------------------------------------- */
+
+/* Labels give way in a fixed order as the composer narrows: effort text,
+ * then the context and Compact labels, then the model name (first when
+ * Stop needs the room). Icons, meters and the ring always stay; the full
+ * text remains in each control's tooltip and accessible name. */
+@container vn-composer (width < 560px) {
+  .vn-chip-effort-label { display: none; }
+}
+
+@container vn-composer (width < 470px) {
+  .vn-context-label,
+  .vn-compact-label { display: none; }
+  .vn-context { padding-inline: 7px; }
+  .vn-compact { padding-inline: 9px; }
+}
+
+@container vn-composer (width < 420px) {
+  .composer-box:has(#stopBtn, .vn-compact:not([hidden])) .vn-chip-model-label,
+  .composer-box:has(#stopBtn, .vn-compact:not([hidden])) .vn-chip-sep { display: none; }
+}
+
+@container vn-composer (width < 340px) {
+  .vn-chip-model-label,
+  .vn-chip-sep { display: none; }
+}
+
+/* ===================================================================
+ * Live voice and dictation: term-llm's own panels, framed in the accent
+ * like an Omarchy notification. No orb, ripples or glow.
+ * =================================================================== */
+
+.live-status,
+.voice-status {
+  margin: 0 0 8px;
+  border: 2px solid var(--vn-accent);
+  background: var(--bg);
+  box-shadow: none;
+}
+
+.live-status-failed,
+.voice-status-failed { border-color: var(--danger); }
+
+.live-status .live-status-dot,
+.voice-status-recording .voice-status-dot {
+  box-shadow: none;
+  animation: vn-breathe 2s ease-in-out infinite;
+}
+
+.live-status .live-status-dot { background: var(--vn-accent); }
+.live-status-spinner,
+.voice-status-spinner { border-top-color: var(--vn-accent); }
+
+.live-status .live-status-stop {
+  border: 1px solid color-mix(in srgb, var(--danger) 70%, transparent);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--error-text);
+}
+
+.live-status-transcript {
+  border: 1px solid var(--border);
+  background: var(--om-fill);
+  box-shadow: none;
+}
+
+.live-status-error { color: var(--error-text); }
+
+@media (prefers-reduced-motion: reduce) {
+  .live-status .live-status-dot,
+  .voice-status-recording .voice-status-dot { animation: none; }
+}
+
+/* ===================================================================
+ * Routines (routines.js): the launcher's frame around a quiet list of the
+ * server's scheduled jobs. It appears at once, as the launcher does.
+ * =================================================================== */
+
+.vn-rt-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 13vh 16px 16px;
+  background: var(--om-scrim);
+}
+
+.vn-rt-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(600px, 100%);
+  max-height: min(600px, 76vh);
+  border: 2px solid var(--om-frame);
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+}
+
+.vn-rt-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.vn-rt-header h2 { margin: 0; font-size: 0.875rem; font-weight: 700; }
+.vn-rt-count { flex: 1; color: var(--vn-text-subtle); font-size: 0.75rem; }
+
+.vn-rt-close {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.vn-rt-close:hover { background: var(--om-fill-hover); color: var(--text); }
+.vn-rt-body { flex: 1; min-height: 0; overflow-y: auto; }
+.vn-rt-list { margin: 0; padding: 4px 0; list-style: none; }
+.vn-rt { display: grid; gap: 4px; padding: 10px 14px; }
+.vn-rt + .vn-rt { border-top: 1px solid var(--border); }
+.vn-rt-title { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.vn-rt-name { overflow: hidden; font-size: 0.8125rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.vn-rt.is-off .vn-rt-name { color: var(--text-muted); }
+
+.vn-rt-tag {
+  padding: 0 6px;
+  border: 1px solid var(--om-line);
+  color: var(--vn-text-subtle);
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.vn-rt-meta,
+.vn-rt-last { color: var(--text-muted); font-size: 0.75rem; }
+.vn-rt-last { display: flex; align-items: center; gap: 8px; }
+.vn-rt-dot { flex: none; width: 7px; height: 7px; background: var(--vn-text-subtle); }
+.vn-rt-green { background: var(--om-green); }
+.vn-rt-red { background: var(--om-red); }
+.vn-rt-yellow { background: var(--om-yellow); }
+
+.vn-rt-open {
+  margin-left: auto;
+  padding: 2px 8px;
+  border: 1px solid var(--om-line);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.6875rem;
+  cursor: pointer;
+  transition: background-color var(--vn-fast) ease, border-color var(--vn-fast) ease;
+}
+
+.vn-rt-open:hover { background: var(--om-fill-hover); border-color: var(--om-line-hover); }
+
+.vn-rt-close:focus-visible,
+.vn-rt-open:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--vn-accent); }
+
+.vn-rt-state { margin: 0; padding: 20px 14px; color: var(--text-muted); font-size: 0.8125rem; }
+
+.vn-rt-foot {
+  margin: 0;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  color: var(--vn-text-subtle);
+  font-size: 0.6875rem;
+}
+
+/* Phones: a sheet from the bottom edge. */
+@media (width <= 767px) {
+  .vn-rt-overlay { align-items: flex-end; padding: 0; }
+  .vn-rt-dialog { width: 100%; max-height: 85vh; border-width: 2px 0 0; padding-bottom: var(--safe-bottom); }
+}
+
+/* ===================================================================
+ * Personal assistant (term-llm --personal-bot)
+ *
+ * That interface paints itself from its own --pb-* palette and themes. With
+ * Hacker on, the palette is the Omarchy theme, the type is monospace like
+ * everything else, and the orb gives way. Only --om-* colours feed --pb-*
+ * here: the assistant points the app's own tokens (--surface, --border, ...)
+ * at --pb-*, so routing these back through those would make a loop.
+ * =================================================================== */
+
+:root[data-vn-theme][data-personal-bot-theme] {
+  --pb-bg: var(--om-background);
+  --pb-sidebar: var(--om-background);
+  --pb-panel: color-mix(in srgb, var(--om-foreground) 4%, var(--om-background));
+  --pb-hover: color-mix(in srgb, var(--om-foreground) 8%, var(--om-background));
+  --pb-active: color-mix(in srgb, var(--om-foreground) 18%, var(--om-background));
+  --pb-tint: color-mix(in srgb, var(--om-foreground) 8%, var(--om-background));
+  --pb-text: var(--om-foreground);
+  --pb-muted: color-mix(in srgb, var(--om-foreground) 78%, var(--om-background));
+  --pb-line: color-mix(in srgb, var(--om-foreground) 14%, var(--om-background));
+  --pb-line-strong: color-mix(in srgb, var(--om-foreground) 40%, var(--om-background));
+  --pb-accent: var(--vn-accent);
+  --pb-on-accent: var(--vn-on-accent);
+  --pb-success: var(--om-green);
+  --pb-warning: var(--om-yellow);
+  --pb-danger: var(--om-red);
+  --pb-link: var(--vn-accent-text);
+  --pb-code-bg: var(--om-dark-background);
+  --pb-shadow: var(--om-darker-background);
+
+  /* App tokens it gives another meaning: keep Omarchy's. */
+  --accent: var(--om-bright-foreground);
+  --accent-strong: var(--om-bright-foreground);
+  --bg-accent: var(--om-fill-hover);
+  --bg-accent-2: var(--om-fill);
+  --backdrop: var(--om-scrim);
+  --overlay: var(--om-scrim);
+  --shadow-soft: 0 0 #0000;
+  --shadow-strong: 0 0 #0000;
+  --shadow-card: 0 0 #0000;
+  --error-text: color-mix(in srgb, var(--om-red) 65%, var(--om-foreground));
+
+  /* Its themes carry syntax colours too; Omarchy's editor colours win. */
+  --syntax-text: var(--om-foreground);
+  --syntax-keyword: var(--om-bright-magenta);
+  --syntax-entity: var(--om-blue);
+  --syntax-constant: var(--om-orange);
+  --syntax-string: var(--om-green);
+  --syntax-variable: var(--om-yellow);
+  --syntax-comment: color-mix(in srgb, var(--om-dark-foreground) 55%, var(--om-foreground));
+  --syntax-tag: var(--om-red);
+  --syntax-heading: var(--om-blue);
+  --syntax-bullet: var(--om-cyan);
+}
+
+/* One family, no serif headlines. */
+html .personal-bot,
+html .pb-hero h1,
+html .pb-page-heading h1,
+html .pb-routine-heading h1,
+html .pb-conversation .empty-chat h2 {
+  font-family: var(--om-font);
+  letter-spacing: 0;
+}
+
+html .pb-hero h1,
+html .pb-page-heading h1,
+html .pb-routine-heading h1 { font-weight: 700; }
+
+html .pb-brand { letter-spacing: 0; }
+
+/* Decoration the flat theme does without. */
+html .pb-orb { display: none; }
+
+/* ===================================================================
+ * Command palette (palette.js)
+ *
+ * Omarchy's launcher: a card framed 2px in the foreground over the
+ * background at 50%, the chosen row a faint fill with its text in the
+ * accent. Opened by a keystroke many times a day, so it appears and leaves
+ * at once, with no motion.
+ * =================================================================== */
+
+.vn-pal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 13vh 16px 16px;
+  background: var(--om-scrim);
+}
+
+.vn-pal {
+  display: flex;
+  flex-direction: column;
+  width: min(640px, 100%);
+  max-height: min(560px, 74vh);
+  overflow: hidden;
+  border: 2px solid var(--om-frame);
+  background: var(--bg);
+  box-shadow: none;
+  color: var(--text);
+}
+
+.vn-pal-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.vn-pal-search-icon svg { width: 16px; height: 16px; color: var(--vn-accent); display: block; }
+
+.vn-pal-input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  outline: none;
+  caret-color: var(--vn-accent);
+  caret-shape: block;
+}
+
+.vn-pal-input:focus-visible { outline: none; }
+.vn-pal-input::placeholder { color: var(--vn-text-subtle); }
+
+.vn-pal-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+  overscroll-behavior: contain;
+}
+
+.vn-pal-group {
+  padding: 9px 8px 4px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--vn-text-subtle);
+}
+
+.vn-pal-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 30px;
+  padding: 0 8px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.vn-pal-item[aria-selected="true"] {
+  background: var(--om-fill-hover);
+  box-shadow: inset 0 0 0 1px var(--om-line-hover);
+  color: var(--vn-accent-text);
+}
+.vn-pal-item[aria-selected="true"] .vn-pal-icon { color: var(--vn-accent); }
+
+.vn-pal-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+}
+
+.vn-pal-icon svg { width: 14px; height: 14px; }
+
+/* Swatches: a colour, or a whole theme (its background behind its accent). */
+.vn-pal-icon.is-swatch::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  background: var(--sw);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--om-foreground) 25%, transparent);
+}
+
+.vn-pal-icon.is-theme::before {
+  content: "";
+  width: 14px;
+  height: 12px;
+  background: linear-gradient(var(--sw) 0 0) 3px 3px / 5px 6px no-repeat, var(--sw-bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--om-foreground) 25%, transparent);
+}
+
+.vn-pal-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.vn-pal-title.is-mono { font-family: var(--font-mono); font-size: 0.75rem; }
+
+.vn-pal-title mark {
+  background: none;
+  color: var(--vn-accent-text);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.vn-pal-item[data-current] .vn-pal-title::after {
+  content: "■";
+  margin-left: 6px;
+  font-size: 0.5rem;
+  vertical-align: 0.2em;
+  color: var(--accent-green);
+}
+
+.vn-pal-hint {
+  flex: none;
+  max-width: 45%;
+  overflow: hidden;
+  font-size: 0.6875rem;
+  color: var(--vn-text-subtle);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.vn-pal-empty {
+  padding: 26px 12px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.vn-pal-foot {
+  display: flex;
+  gap: 16px;
+  padding: 8px 14px;
+  border-top: 1px solid var(--border);
+  font-size: 0.6875rem;
+  color: var(--vn-text-subtle);
+}
+
+.vn-kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 18px;
+  margin-right: 4px;
+  padding: 0 5px;
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+  box-shadow: none;
+  color: var(--text-muted);
+  font-family: var(--vn-font-sans);
+  font-size: 0.625rem;
+  font-weight: 600;
+}
+
+.vn-pal-search .vn-kbd { margin: 0; }
+
+/* ⌘K hint inside the sidebar search field. */
+.sidebar-search-wrap { position: relative; }
+
+.vn-search-kbd {
+  position: absolute;
+  top: 16px;
+  right: calc(0.6rem + 6px);
+  transform: translateY(-50%);
+  height: 18px;
+  padding: 0 5px;
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+  box-shadow: none;
+  color: var(--vn-text-subtle);
+  font: inherit;
+  font-size: 0.625rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity var(--vn-fast) ease, color var(--vn-fast) ease;
+}
+
+.vn-search-kbd:hover { color: var(--text); border-color: var(--om-line-hover); }
+
+.sidebar-search-wrap:has(input:focus, input:not(:placeholder-shown)) .vn-search-kbd {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (width <= 767px) {
+  .vn-pal-overlay { padding: calc(8px + var(--safe-top)) 8px 8px; }
+  .vn-pal { max-height: 70vh; }
+  .vn-pal-input { font-size: 16px; }
+  .vn-pal-item { min-height: 44px; }
+  .vn-pal-foot { display: none; }
+}
+
+/* ===================================================================
+ * Theme pass: secondary surfaces
+ * =================================================================== */
+
+input[type="checkbox"],
+input[type="radio"] { accent-color: var(--vn-accent); }
+
+/* Buttons: the shell's framed control; primary takes the accent. */
+.btn {
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+  font-weight: 600;
+  box-shadow: none;
+  transition: background-color var(--vn-fast) ease, border-color var(--vn-fast) ease,
+    opacity var(--vn-fast) ease, transform 160ms var(--vn-ease);
+}
+
+.btn:hover:not(:disabled) { background: var(--om-fill-hover); border-color: var(--om-line-hover); }
+
+.btn.primary {
+  border-color: transparent;
+  background: var(--vn-accent);
+  color: var(--vn-on-accent);
+  box-shadow: none;
+}
+
+.btn.primary:hover:not(:disabled) { opacity: 1; background: var(--accent-hover); border-color: transparent; }
+
+/* Slash menu: a launcher-style list framed in the foreground. */
+.slash-command-menu {
+  padding: 4px;
+  border: 2px solid var(--om-frame);
+  background: var(--bg);
+  box-shadow: none;
+}
+
+.slash-command-option { padding: 0.45rem 0.65rem; }
+.slash-command-option:hover,
+.slash-command-option.selected {
+  background: var(--om-fill-hover);
+  box-shadow: inset 0 0 0 1px var(--om-line-hover);
+}
+.slash-command-name { font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; color: var(--text); }
+.slash-command-option.selected .slash-command-name { color: var(--vn-accent-text); }
+
+/* Argument menus (e.g. thinking levels): framed badges, accent for "current". */
+.slash-command-badge { border-color: var(--om-line); font-size: 0.625rem; font-weight: 600; }
+.slash-command-badge.current {
+  border-color: var(--vn-accent);
+  background: var(--om-fill-selected);
+  color: var(--text);
+}
+.slash-command-footer { border-top-color: var(--border); color: var(--vn-text-subtle); font-size: 0.6875rem; }
+.slash-command-description { font-size: 0.6875rem; color: var(--text-muted); }
+
+/* Diff sidebar */
+.diff-sidebar {
+  background: var(--bg);
+  border-left-color: var(--border);
+}
+
+.diff-sidebar-header { border-bottom: 1px solid var(--border); }
+.diff-file-row { background: transparent; border-bottom-color: var(--border); transition: background-color var(--vn-fast) ease; }
+.diff-file-row:hover { background: var(--om-fill-hover); }
+.diff-empty { color: var(--vn-text-subtle); font-size: 0.75rem; }
+.diff-filter-input { background: var(--om-fill); border: 1px solid var(--om-line); }
+.diff-filter-input:focus { outline: none; border-color: var(--vn-accent); box-shadow: var(--vn-ring); }
+
+/* Plan panel */
+.plan-surface { background: var(--bg); }
+.plan-panel { border-left-color: var(--border); }
+.plan-progress-track { background: var(--om-fill-hover); overflow: hidden; }
+.plan-progress-track > span { background: var(--vn-accent); }
+.current-plan-step-in-progress .current-plan-step-marker,
+.current-plan-step-in .current-plan-step-marker { color: var(--vn-accent); }
+.current-plan-step-completed .current-plan-step-marker { color: var(--accent-green); }
+.plan-sheet-handle { background: var(--border-strong); }
+
+/* Approvals & questions (inline cards and modal) */
+.approval-request {
+  background: var(--om-fill);
+  border-color: var(--om-line);
+}
+
+.approval-option,
+.ask-user-option,
+.share-choice,
+.worktree-option,
+.skill-row,
+.mcp-row,
+.mcp-catalogue-row {
+  transition: background-color var(--vn-fast) ease, border-color var(--vn-fast) ease;
+}
+
+.ask-user-question {
+  background: var(--vn-tool-bg);
+  border-color: var(--om-line);
+}
+
+.approval-option kbd,
+.approval-shortcuts kbd {
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+  box-shadow: none;
+}
+
+.skill-row:hover,
+.skill-row.selected,
+.worktree-option:hover,
+.mcp-row:hover,
+.mcp-row:focus-within,
+.mcp-catalogue-row:hover { background: var(--om-fill-hover); }
+
+.share-choice:hover,
+.share-choice:focus-within { background: var(--om-fill-hover); }
+.share-choice:has(input:checked) {
+  border-color: var(--vn-accent);
+  background: var(--om-fill-selected);
+}
+
+.stats-table thead { color: var(--vn-text-subtle); }
+.stats-table th,
+.stats-table td { border-bottom-color: var(--border); }
+.stats-table { font-variant-numeric: tabular-nums; }
+
+/* Lightbox */
+.lightbox-backdrop {
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+}
+
+.lightbox-btn {
+  background: var(--bg);
+  border: 1px solid var(--om-line);
+  box-shadow: none;
+  transition: background-color var(--vn-fast) ease;
+}
+
+.lightbox-btn:hover { background: var(--surface-2); }
+
+/* ------------------------------------------------- comfortable type */
+
+/* A roomier reading scale: 14px prose on a 1.75 line, 13px chrome.
+ * Compact (default stylesheet values above) stays one click away. */
+:root[data-vn-type="comfortable"] .messages { gap: 1.1rem; }
+:root[data-vn-type="comfortable"] .messages > .message.user:not(:first-child) { margin-top: 1.5rem; }
+
+:root[data-vn-type="comfortable"] { --message-font-size: 0.875rem; }
+
+:root[data-vn-type="comfortable"] .message-body {
+  line-height: 1.75;
+  letter-spacing: 0;
+}
+
+:root[data-vn-type="comfortable"] .message.user .message-body {
+  line-height: 1.6;
+  padding: 0.65rem 1rem;
+}
+
+:root[data-vn-type="comfortable"] .markdown-body p { margin: 0.8em 0; }
+:root[data-vn-type="comfortable"] .markdown-body li { margin: 0.35em 0; }
+:root[data-vn-type="comfortable"] .markdown-body ul,
+:root[data-vn-type="comfortable"] .markdown-body ol { margin: 0.6em 0 0.9em; padding-left: 1.6rem; }
+
+:root[data-vn-type="comfortable"] .markdown-body h1,
+:root[data-vn-type="comfortable"] .markdown-body h2,
+:root[data-vn-type="comfortable"] .markdown-body h3,
+:root[data-vn-type="comfortable"] .markdown-body h4 { margin: 1.4em 0 0.55em; }
+:root[data-vn-type="comfortable"] .markdown-body h1 { font-size: 1.25rem; }
+:root[data-vn-type="comfortable"] .markdown-body h2 { font-size: 1.0625rem; }
+:root[data-vn-type="comfortable"] .markdown-body h3 { font-size: 0.9375rem; }
+:root[data-vn-type="comfortable"] .markdown-body h4,
+:root[data-vn-type="comfortable"] .markdown-body h5,
+:root[data-vn-type="comfortable"] .markdown-body h6 { font-size: 0.875rem; }
+
+:root[data-vn-type="comfortable"] .markdown-body pre code { font-size: 0.8125rem; line-height: 1.65; padding: 1rem 1.1rem; }
+:root[data-vn-type="comfortable"] .markdown-body table { font-size: 0.8125rem; }
+
+:root[data-vn-type="comfortable"] .prompt { font-size: 0.875rem; line-height: 1.6; }
+:root[data-vn-type="comfortable"] .vn-chip { font-size: 0.75rem; }
+
+:root[data-vn-type="comfortable"] .tool-group-toggle { font-size: 0.8125rem; }
+:root[data-vn-type="comfortable"] .message-meta { font-size: 0.75rem; }
+
+:root[data-vn-type="comfortable"] .session-title { font-size: 0.8125rem; line-height: 1.45; }
+:root[data-vn-type="comfortable"] .session-meta { font-size: 0.6875rem; }
+:root[data-vn-type="comfortable"] .session-group h3,
+:root[data-vn-type="comfortable"] .session-group-toggle { font-size: 0.6875rem; }
+:root[data-vn-type="comfortable"] .new-chat-btn,
+:root[data-vn-type="comfortable"] .widgets-sidebar-btn,
+:root[data-vn-type="comfortable"] .sidebar-search-input,
+:root[data-vn-type="comfortable"] .hub-agent-link { font-size: 0.8125rem; }
+:root[data-vn-type="comfortable"] .brand,
+:root[data-vn-type="comfortable"] .header-title { font-size: 0.875rem; }
+
+/* ---------------------------------------------------------------- motion */
+
+/* Omarchy's rules: ease-out only, never a bounce; under 300ms; what leaves
+ * goes faster than it came; nothing scales from 0 (0.97 at most); a press
+ * shrinks to 0.97. */
+
+@keyframes vn-rise {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes vn-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vn-fade-out { from { opacity: 1; } to { opacity: 0; } }
+
+@keyframes vn-pop-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes vn-pop-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: scale(0.97); }
+}
+
+@keyframes vn-pop-up {
+  from { opacity: 0; transform: translateY(4px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes vn-modal-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes vn-sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+
+@keyframes vn-sheet-out {
+  from { transform: none; }
+  to { transform: translateY(100%); }
+}
+
+@keyframes vn-breathe {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Press feedback everywhere. */
+  .icon-btn:active,
+  .composer-icon-btn:active,
+  .send-btn:active:not(:disabled),
+  .stop-btn:active,
+  .turn-action-btn:active,
+  .code-copy-btn:active,
+  .new-chat-btn:active,
+  .widgets-sidebar-btn:active,
+  .header-action:active,
+  .vn-theme-btn:active,
+  .vn-chip:active:not(:disabled),
+  .vn-segment button:active,
+  .vn-theme-tile:active,
+  .vn-swatch:active,
+  .sidebar-view-switch button:active,
+  .shell-overlay-actions .btn:active,
+  .settings-tabs [role="tab"]:active,
+  .btn:active:not(:disabled) {
+    transform: scale(0.97);
+    transition-duration: 160ms;
+  }
+
+  .message,
+  .tool-group { animation: vn-rise 180ms var(--vn-ease) both; }
+
+  .tool-group-details:not(:empty) { animation: vn-rise 180ms var(--vn-ease) both; }
+
+  /* Dialogs grow and fade in; they close at once, as the app removes them. */
+  .modal-overlay:not(.hidden) { animation: vn-fade-in 180ms ease-out both; }
+  .modal-overlay:not(.hidden) > .modal { animation: vn-modal-in 200ms var(--vn-ease) both; }
+
+  .chip-popover[open],
+  .chip-popover:not([hidden]) {
+    animation: vn-pop-in 180ms var(--vn-ease) both;
+    transform-origin: top right;
+  }
+
+  :root[data-vn-runtime-anchor] .chip-popover-runtime[open],
+  :root[data-vn-composer-bar] .chip-popover.context-popover[open] {
+    animation-name: vn-pop-up;
+  }
+
+  :root[data-vn-composer-bar] .chip-popover.context-popover[open] { transform-origin: bottom right; }
+
+  /* Menus and the slash list answer a keystroke or click and are gone in a
+   * moment: no motion, as Omarchy's own menus. */
+
+  .toast { animation: vn-pop-up 220ms var(--vn-ease) both; }
+
+  .sidebar { transition-timing-function: var(--vn-ease); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streaming-indicator::before,
+  .hub-agent-attention,
+  .shell-status-running .shell-status-dot { animation: none; }
+  .vn-popover,
+  .vn-popover[data-leaving] { animation: none; }
+}
+
+/* --------------------------------------------------------------- mobile */
+
+@media (width <= 767px) {
+  .messages { gap: 0.8rem; }
+  .messages > .message.user:not(:first-child) { margin-top: 0.75rem; }
+
+  .chat-scroll { padding-top: 1rem; }
+
+  :root { --message-font-size: 0.875rem; }
+  .message-body { line-height: 1.65; }
+  .message.user { max-width: 88%; }
+  .message.user .message-body { padding: 0.55rem 0.85rem; }
+
+  .header-title { font-size: 0.875rem; }
+
+  /* Composer: thumb-sized controls, edge to edge. */
+  .composer { padding-inline: calc(0.5rem + var(--safe-left)) calc(0.5rem + var(--safe-right)); }
+  .main[data-vn-float] > .composer { padding-bottom: max(0.5rem, var(--safe-bottom)); }
+
+  .composer-box { --vn-ctl: 40px; padding: 4px 6px 6px; }
+  .prompt { font-size: 16px; padding: 10px 10px 4px; }
+
+  .composer-icon-btn,
+  .send-btn { min-width: var(--vn-ctl); min-height: var(--vn-ctl); }
+
+  .stop-btn { padding: 0 14px; }
+
+  .vn-composer-bar { padding-inline: 4px; gap: 2px; }
+  .vn-chip { padding: 0 10px; font-size: 0.75rem; }
+
+  /* Sidebar drawer: a panel framed on its open edge. */
+  .sidebar {
+    background: var(--bg);
+    box-shadow: none;
+    border-inline-end: 2px solid var(--om-frame);
+  }
+
+  .session-btn { padding-block: 0.6rem; }
+  .session-title { font-size: 0.875rem; }
+  .session-meta { font-size: 0.75rem; }
+
+  /* Dialogs become bottom sheets with a grabber. */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: calc(2.5rem + var(--safe-top)) 0 0;
+  }
+
+  .modal-overlay > .modal,
+  .modal.widgets-modal,
+  .modal.approval-modal,
+  .modal.settings-modal {
+    width: 100%;
+    max-height: calc(var(--app-height) - 2.5rem - var(--safe-top));
+    border-bottom: 0;
+    border-inline: 0;
+    padding-bottom: calc(1.25rem + var(--safe-bottom));
+    position: relative;
+  }
+
+  .modal.widgets-modal,
+  .modal.approval-modal { padding-bottom: var(--safe-bottom); }
+
+  .modal-overlay > .modal::before {
+    content: "";
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    width: 38px;
+    height: 4px;
+    margin-left: -19px;
+    background: var(--border-strong);
+    z-index: 2;
+  }
+
+  :root[data-vn-runtime-anchor] .chip-popover-runtime,
+  :root[data-vn-composer-bar] .chip-popover.context-popover {
+    inset: auto 0.5rem max(0.5rem, env(safe-area-inset-bottom, 0.5rem)) 0.5rem !important;
+  }
+
+  :root[data-vn-runtime-anchor] .chip-popover-runtime {
+    /* Native dialog sizing can exceed the space between the sheet gutters. */
+    min-width: 0;
+    max-width: calc(100vw - 1rem);
+  }
+
+  :root[data-vn-runtime-anchor] .chip-popover-runtime .runtime-popover-heading {
+    white-space: normal;
+  }
+
+  .vn-popover {
+    left: 0.5rem !important;
+    right: 0.5rem !important;
+    top: auto !important;
+    bottom: max(0.5rem, var(--safe-bottom)) !important;
+    width: auto;
+    max-height: calc(100dvh - max(0.5rem, var(--safe-bottom)) - 0.5rem);
+    padding: 14px 14px calc(14px + var(--safe-bottom));
+    transform-origin: bottom center;
+  }
+
+  .vn-popover-backdrop { background: var(--om-scrim); animation: vn-fade-in 180ms ease-out both; }
+
+  .vn-themes { grid-template-columns: repeat(auto-fill, 38px); gap: 8px; justify-content: start; }
+  .vn-swatch { max-width: 40px; justify-self: center; }
+  .vn-segment button { padding: 9px 4px 8px; font-size: 0.75rem; }
+
+  .shell-overlay-actions .btn { min-height: 38px; }
+
+  select:not([multiple], [size]),
+  .runtime-popover-select,
+  .settings-select {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .vn-chip-runtime .vn-chip-sep,
+  .vn-chip-runtime .vn-chip-effort-label { display: none; }
+}
+
+@media (width <= 767px) and (prefers-reduced-motion: no-preference) {
+  .modal-overlay:not(.hidden) > .modal { animation: vn-sheet-in 250ms var(--vn-ease) both; }
+
+  :root[data-vn-runtime-anchor] .chip-popover-runtime[open],
+  .chip-popover[open] { animation: vn-sheet-in 250ms var(--vn-ease) both; }
+
+  .vn-popover { animation: vn-sheet-in 250ms var(--vn-ease) both; }
+  .vn-popover[data-leaving] { animation: vn-sheet-out 160ms ease-out both; }
+}

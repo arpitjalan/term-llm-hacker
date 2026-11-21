@@ -1,0 +1,5 @@
+title: Hacker
+description: A terminal-style look for the term-llm web UI. 23 themes, one monospace font, square framed surfaces, a simpler sidebar, a launcher-style ⌘K palette, and more. No bundled fonts or images.
+format_version: 1
+css: style.css
+js: main.js
