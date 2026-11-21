@@ -16,6 +16,10 @@ export const KEYS = {
   type: "term-llm:hacker:type-scale",
   codeWrap: "term-llm:hacker:code-wrap",
   local: "term-llm:hacker:local-json",
+  notesOpen: "term-llm:hacker:notes-open",
+  notesWidth: "term-llm:hacker:notes-width",
+  notesPreview: "term-llm:hacker:notes-preview",
+  notesLast: "term-llm:hacker:notes-last",
 };
 
 // Accent roles: the theme's own accent, or one of its palette colours, so the
@@ -199,16 +203,34 @@ export function apiBase() {
   return apiPrefix;
 }
 
-// Same-origin GET against this node's API, authenticated the way the app is
-// (its stored bearer token if any; Hub sessions ride on cookies).
-export async function apiGet(path) {
+// A same-origin request to this node's API, authenticated the way the app is
+// (its stored bearer token if any; Hub sessions ride on cookies). Resolves
+// to the JSON reply. Rejects with an Error carrying `status` (0 when the
+// request never arrived), `data` (a JSON error body) and `text` (any other
+// body), so callers can tell a missing route from a refused request.
+export async function apiRequest(method, path, body, { keepalive = false } = {}) {
   const headers = { Accept: "application/json" };
   const token = read(appKey("term_llm_token"), null) ?? read("term_llm_token", null);
   if (token) headers.Authorization = `Bearer ${token}`;
-  const res = await fetch(`${apiPrefix}${path}`, { headers, credentials: "same-origin" });
-  if (!res.ok) throw new Error(`${path}: ${res.status}`);
-  return res.json();
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  let res;
+  try {
+    res = await fetch(`${apiPrefix}${path}`, {
+      method, headers, keepalive, credentials: "same-origin", body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch (cause) {
+    throw Object.assign(new Error(`${path}: offline`), { status: 0, cause });
+  }
+  const json = /\bjson\b/i.test(res.headers.get("content-type") || "");
+  const data = json ? await res.json().catch(() => null) : null;
+  if (!res.ok || !json) {
+    const text = json ? "" : (await res.text().catch(() => "")).slice(0, 300);
+    throw Object.assign(new Error(`${path}: ${res.status}`), { status: res.status, data, text, notJson: !json });
+  }
+  return data;
 }
+
+export const apiGet = (path) => apiRequest("GET", path);
 
 /* ---------------------------------------------------- provider lookup */
 

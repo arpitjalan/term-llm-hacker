@@ -1,0 +1,7 @@
+# Hacker's notes: term-llm starts this on demand, hands it a private Unix
+# socket (not a TCP port, which every local user could reach), proxies it at
+# <base>/widgets/hacker-notes/ behind its own login, and stops it when idle.
+title: Notes
+description: Hacker's notes panel, kept in SQLite on this machine
+mount: hacker-notes
+command: ["python3", "-I", "server.py", "--socket", "$SOCKET"]

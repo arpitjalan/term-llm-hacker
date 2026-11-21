@@ -2,7 +2,7 @@
 
 A terminal-style look for the [term-llm](https://term-llm.com) web UI.
 
-Hacker gives term-llm the feel of a terminal: your choice of 23 themes, one monospace font everywhere, square corners, flat surfaces framed by borders instead of shadows or glass, and the accent on whatever is focused. It keeps practical additions such as a command palette, code wrapping, and context usage, and stays light: no bundled fonts or images, about 66 KB gzipped in all. It is a web extension, not a fork: no term-llm rebuild or upstream patches required.
+Hacker gives term-llm the feel of a terminal: your choice of 23 themes, one monospace font everywhere, square corners, flat surfaces framed by borders instead of shadows or glass, and the accent on whatever is focused. It keeps practical additions such as a command palette, notes, code wrapping, and context usage, and stays light: no bundled fonts or images, about 100 KB gzipped in all. It is a web extension, not a fork: no term-llm rebuild or upstream patches required.
 
 ![Hacker in Tokyo Night with a demo conversation](docs/screenshots/hero-dark.png)
 
@@ -92,6 +92,19 @@ Laid out like term-llm's personal-assistant interface:
 | --- | --- |
 | ![Catppuccin Latte](docs/screenshots/hero-light.png) | ![The home panel with agent, status, and theme](docs/screenshots/empty.png) |
 
+### Notes
+
+A **Notes** panel on the right, opened with the notebook button beside the appearance button, or with **Open notes** and **New note** in the ⌘K palette, which also finds notes by title.
+
+- A note is a page of Markdown whose first line is its title. The editor colours Markdown as you type (headings, emphasis, code, links, checklists), continues lists and checklists on **Enter**, indents them with **Tab**, and ticks a task with **⌘/Ctrl+Enter**. **⌘/Ctrl+B** and **⌘/Ctrl+I** wrap the selection, and undo works as usual.
+- Notes save as you type, into **SQLite** on the machine the agent runs on, so they are there in every browser and survive reinstalling.
+- Search titles and text, pin notes to the top, preview a note with working checkboxes, copy it, or insert it into the message box. Deleting offers Undo, and a note you empty out is deleted when you leave it.
+- **Save from the chat:** select text in a conversation and a small **Save note** button appears where the selection ends. The note keeps it as Markdown (code blocks with their language, lists and tasks, quotes, tables, links); a selection across several messages labels each part with who wrote it. It also keeps a link back: the note shows **from** and the chat's name, which opens that chat at the message, marked for a moment. The link is the chat's address plus `#message-<id>`, so it works pasted into a browser too.
+- A note edited in two tabs at once never silently overwrites the other: you choose which version to keep.
+- Under a Hub, each agent has its own notes. The panel stays open, and the note you had open comes back, as you move between agents and pages. Drag its left edge to resize it; on phones it covers the screen.
+
+The notes are kept by a small widget that `./install.sh` installs next to the extension (`widget/`, as `~/.config/term-llm/widgets/hacker-notes`). term-llm starts it when the panel first asks for notes, serves it behind the web UI's own login at `<base>/widgets/hacker-notes/` over a private Unix socket, and stops it after ten idle minutes; its entry in term-llm's Widgets list opens the panel. It needs `python3` (standard library only) and widgets left on (no `--disable-widgets`). The database is `~/.local/share/term-llm/hacker/notes.db` (under `$XDG_DATA_HOME` when set); set `HACKER_NOTES_DB` in the server's environment to move it. Agents running as the same user on one machine share it, and a container agent needs the widget installed inside its container. term-llm names the socket after the widget's folder, so if one user runs two `serve web` processes on one machine, rename the folder for one of them.
+
 ### term-llm's personal assistant
 
 term-llm's personal-assistant interface (`serve --personal-bot`) gets the same treatment: the theme you chose in place of its own palettes (its theme setting has no effect while Hacker is on), the same monospace with no serif headlines, and no decorative orb. The home panel stays out of the way there, since that interface has a home of its own.
@@ -108,7 +121,7 @@ cd term-llm-hacker
 
 In the term-llm web UI, open **Settings → Extensions**, reload the extensions list if necessary, enable **Hacker**, and refresh the page. Disable other full-UI themes to avoid conflicting styles.
 
-The installer copies the runtime into `~/.config/term-llm/extensions/hacker`. It does not modify your term-llm binary, provider settings, approval policy, or conversations. A copy is intentional: the tested extension loader does not discover symlinked extension directories.
+The installer copies the runtime into `~/.config/term-llm/extensions/hacker` and the [notes](#notes) widget into `~/.config/term-llm/widgets/hacker-notes`. It does not modify your term-llm binary, provider settings, approval policy, or conversations. A copy is intentional: the tested extension loader does not discover symlinked extension directories.
 
 ### Optional automatic enabling
 
@@ -116,12 +129,12 @@ The installer copies the runtime into `~/.config/term-llm/extensions/hacker`. It
 ./install.sh --enable
 ```
 
-This discovers the first local `term-llm serve` process carrying `--token`, reloads extensions through its authenticated local API, and adds Hacker to its enabled list. It preserves other enabled extensions. If you run multiple servers, prefer the manual Settings flow so you choose the correct one. This helper requires Bash, curl, Python 3, and a Unix-style process listing.
+This finds the first local `term-llm serve web` process and its token (its `--token`, or its `TERM_LLM_SERVE_TOKEN`), reloads extensions and widgets through its authenticated local API, adds Hacker to its enabled list, and restarts an older notes widget if one is running. It preserves other enabled extensions. If you run multiple servers, prefer the manual Settings flow so you choose the correct one. This helper requires Bash, curl, Python 3, and a Unix-style process listing.
 
-For a custom extension directory:
+For custom directories:
 
 ```bash
-TERM_LLM_EXTENSIONS_DIR=/your/extensions ./install.sh
+TERM_LLM_EXTENSIONS_DIR=/your/extensions TERM_LLM_WIDGETS_DIR=/your/widgets ./install.sh
 ```
 
 Install on the machine or container running the web server. For a multi-node Hub, install and enable it on each node where you want the theme.
@@ -189,14 +202,15 @@ git pull --ff-only
 ./install.sh
 ```
 
-Reload extensions in Settings, then refresh the page.
+Reload extensions in Settings, then refresh the page (or run `./install.sh --enable`, which also restarts the notes widget).
 
-To return to the stock UI, disable Hacker in **Settings → Extensions** and refresh. You can then delete the installed `hacker` directory if desired. Browser preferences remain available for a later reinstall.
+To return to the stock UI, disable Hacker in **Settings → Extensions** and refresh. You can then delete the installed `hacker` directory, and the `hacker-notes` widget directory, if desired. Your notes stay in `~/.local/share/term-llm/hacker/notes.db` until you delete that too. Browser preferences remain available for a later reinstall.
 
 ## Privacy and compatibility
 
 - Runtime code and theme palettes are self-contained; nothing, fonts included, is downloaded from elsewhere. Hacker adds no analytics or third-party runtime service.
 - It uses browser storage and the current server's authenticated, same-origin APIs for UI information such as provider metadata and, for Routines, the list of scheduled jobs (read only). It does not replace the app's authorization or approval systems.
+- Notes are stored only in a SQLite file on the agent's machine, through the notes widget, which term-llm runs as your user behind its own login; a note saved from a chat also keeps that chat's name and address. Nothing is requested until you open the panel or save a selection.
 - Some features decorate existing DOM selectors rather than stable extension APIs. A term-llm upgrade can require an extension update.
 - Context availability depends on the server/provider. Agent indicators reflect the host UI; they are not independent health checks.
 - Clipboard and browser-chrome features depend on browser permissions and support.
@@ -268,6 +282,10 @@ The live preview injects the live-voice panel markup in every phase (connecting,
 | `home.js` | The new-chat home panel (agent, status, theme, prompt line) |
 | `nav.js` | Sidebar section links: Activity, Conversations, Projects, Routines, Widgets |
 | `routines.js` | The Routines list (loaded on first use) |
+| `notes.js` | The Notes panel: list, search, editor, saving |
+| `markdown.js` | Markdown for notes: the editor's colouring, the preview, list editing, chat selections as Markdown |
+| `clip.js` | Saving a chat selection as a note, and links back to its message |
+| `widget/` | The notes widget term-llm runs: a Python standard-library server over SQLite |
 | `tools/` | Theme generator, optional browser checks, and demo screenshot tooling |
 
 ## Contributing

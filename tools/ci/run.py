@@ -68,7 +68,7 @@ def main():
         # Explicit runtime allowlist: never copy ignored local.json, git, or tools/out.
         for file in ['extension.yaml', 'style.css', 'main.js', 'util.js', 'colors.js', 'themes.js', 'thread.js', 'arrivals.js',
                      'composer.js', 'palette.js', 'notify.js', 'favicon.js', 'home.js', 'nav.js', 'routines.js',
-                     'LICENSE']:
+                     'notes.js', 'markdown.js', 'clip.js', 'LICENSE']:
             shutil.copyfile(ROOT / file, extension / file)
         (extension / 'local.json').write_text('{}\n')
         (config / 'config.yaml').write_text(

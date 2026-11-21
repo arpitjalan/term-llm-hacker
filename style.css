@@ -3425,6 +3425,600 @@ button.vn-fetch-state:hover { color: var(--vn-accent-text); text-decoration: und
 }
 
 /* ===================================================================
+ * Notes (notes.js): a panel on the right, as wide as you drag it. The app
+ * makes room the way its own docked shell does, by narrowing .app; on
+ * phones the panel covers the screen. Labelled and framed like the sidebar.
+ * The editor colours Markdown as Omarchy's editor themes colour code.
+ * =================================================================== */
+
+:root {
+  --vn-notes-w: clamp(280px, var(--vn-notes-user-w, 380px), min(720px, 60vw));
+}
+
+@media (width > 767px) {
+  :root[data-vn-notes] .app { width: calc(100% - var(--vn-notes-w)); }
+}
+
+:root[data-vn-notes-resizing],
+:root[data-vn-notes-resizing] * { cursor: col-resize !important; user-select: none; }
+:root[data-vn-notes-resizing] .app { transition: none; }
+
+/* Its button sits beside the appearance button, drawn the same way. */
+.vn-notes-toggle {
+  width: var(--header-action-height);
+  height: var(--header-action-height);
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex: none;
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease;
+}
+
+.vn-notes-toggle svg { width: 16px; height: 16px; }
+.vn-notes-toggle:hover { background: var(--om-fill-hover); color: var(--text); }
+.vn-notes-toggle[aria-expanded="true"] { background: var(--om-fill-selected); color: var(--vn-accent-text); }
+.vn-notes-toggle:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--vn-accent); }
+
+.vn-notes {
+  position: fixed;
+  top: var(--app-offset-top, 0px);
+  right: 0;
+  z-index: var(--z-floating-panel, 20);
+  display: flex;
+  flex-direction: column;
+  width: var(--vn-notes-w);
+  height: var(--app-height, 100dvh);
+  padding-right: var(--safe-right, 0px);
+  border-left: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--om-font);
+}
+
+.vn-notes[hidden] { display: none; }
+
+/* Drag the left edge to resize; the accent marks it, as the app's handles. */
+.vn-notes-grip {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  z-index: 1;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+}
+
+.vn-notes-grip::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 2px;
+  background: transparent;
+  transition: background-color var(--vn-fast) ease;
+}
+
+.vn-notes-grip:hover::after,
+.vn-notes-grip:focus-visible::after,
+:root[data-vn-notes-resizing] .vn-notes-grip::after { background: var(--vn-accent); }
+
+/* The head lines up with the chat's header, rule and all. */
+.vn-notes-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  min-height: var(--vn-notes-head-h, 48px);
+  padding: calc(0.5rem + var(--safe-top, 0px)) 8px 0.5rem 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.vn-notes-head-list,
+.vn-notes-head-note {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.vn-notes[data-view="list"] .vn-notes-head-note,
+.vn-notes[data-view="note"] .vn-notes-head-list,
+.vn-notes[data-view="list"] .vn-notes-view-note,
+.vn-notes[data-view="note"] .vn-notes-view-list { display: none; }
+
+.vn-notes-title {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.vn-notes-count {
+  margin-right: auto;
+  color: var(--vn-text-subtle);
+  font-size: 0.6875rem;
+}
+
+.vn-notes-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: none;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--vn-fast) ease, color var(--vn-fast) ease, border-color var(--vn-fast) ease;
+}
+
+.vn-notes-btn svg { width: 15px; height: 15px; flex: none; }
+.vn-notes-btn:hover { background: var(--om-fill-hover); color: var(--text); }
+.vn-notes-btn[aria-pressed="true"] { background: var(--om-fill-selected); color: var(--vn-accent-text); }
+.vn-notes-btn:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--vn-accent); }
+.vn-notes-btn.is-danger:hover { background: color-mix(in srgb, var(--om-red) 14%, transparent); color: var(--error-text); }
+
+/* New: the one framed action, as New chat is in the sidebar. */
+.vn-notes-new { padding: 0 9px 0 7px; border: 1px solid var(--om-line); color: var(--text); }
+.vn-notes-new:hover { border-color: var(--vn-accent); }
+.vn-notes-new:hover svg { color: var(--vn-accent); }
+
+.vn-notes-back { padding-right: 9px; color: var(--text); }
+
+.vn-notes-status {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 6px;
+  color: var(--vn-text-subtle);
+  font-size: 0.6875rem;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vn-notes-status[data-tone="warn"] { color: color-mix(in srgb, var(--om-yellow) 70%, var(--om-foreground)); }
+
+.vn-notes-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* --- the list */
+
+.vn-notes-searchbar { flex: none; padding: 10px 12px 6px; }
+
+.vn-notes-search {
+  width: 100%;
+  height: 30px;
+  padding: 0 0.7rem;
+  border: 1px solid var(--om-line);
+  background: var(--om-fill);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.75rem;
+  outline: none;
+  transition: border-color var(--vn-fast) ease;
+}
+
+.vn-notes-search::placeholder { color: var(--vn-text-subtle); }
+.vn-notes-search:focus { border-color: var(--vn-accent); box-shadow: var(--vn-ring); }
+
+.vn-notes-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 8px;
+}
+
+.vn-notes-list[hidden] { display: none; }
+
+/* Section labels: small, uppercase, widely spaced, as the sidebar's. */
+.vn-notes-group {
+  padding: 12px 14px 4px;
+  color: var(--vn-text-subtle);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.vn-note-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 10px;
+  row-gap: 1px;
+  margin: 0 6px;
+  padding: 7px 8px;
+  cursor: pointer;
+}
+
+.vn-note-row[aria-selected="true"] { background: var(--om-fill-hover); }
+.vn-note-row[aria-selected="true"] .vn-note-row-title { color: var(--vn-accent-text); }
+
+.vn-note-row-title {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Pinned notes carry the accent block the sidebar uses for its states. */
+.vn-note-row[data-pinned] .vn-note-row-title::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 0.5em;
+  vertical-align: 0.12em;
+  background: var(--vn-accent);
+}
+
+.vn-note-row-time {
+  align-self: center;
+  color: var(--vn-text-subtle);
+  font-size: 0.625rem;
+  white-space: nowrap;
+}
+
+.vn-note-row-snippet {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vn-notes-state {
+  margin: 0;
+  padding: 18px 16px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
+.vn-notes-state p { margin: 0 0 10px; }
+.vn-notes-state-title { color: var(--text); font-weight: 700; }
+.vn-notes-state.is-problem .vn-notes-state-title { color: var(--error-text); }
+
+.vn-notes-action {
+  padding: 3px 10px;
+  border: 1px solid var(--om-line);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.6875rem;
+  cursor: pointer;
+  transition: background-color var(--vn-fast) ease, border-color var(--vn-fast) ease;
+}
+
+.vn-notes-action:hover { background: var(--om-fill-hover); border-color: var(--om-line-hover); }
+.vn-notes-action:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--vn-accent); }
+
+.vn-notes-where {
+  flex: none;
+  margin: 0;
+  padding: 8px 14px calc(8px + var(--safe-bottom, 0px));
+  border-top: 1px solid var(--border);
+  color: var(--vn-text-subtle);
+  font-size: 0.625rem;
+}
+
+.vn-notes-where:empty { display: none; }
+
+/* --- the editor: transparent text over a coloured copy, laid out alike */
+
+.vn-note-conflict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 8px 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--om-yellow) 45%, transparent);
+  background: color-mix(in srgb, var(--om-yellow) 10%, var(--bg));
+  font-size: 0.6875rem;
+}
+
+.vn-note-conflict[hidden] { display: none; }
+.vn-note-conflict-text { flex: 1 1 100%; }
+
+.vn-note-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.vn-note-editor {
+  position: relative;
+  min-height: 100%;
+}
+
+.vn-note-editor[hidden],
+.vn-note-preview[hidden] { display: none; }
+
+.vn-note-hl,
+.vn-note-text {
+  box-sizing: border-box;
+  margin: 0;
+  border: 0;
+  padding: 14px 16px 64px;
+  font-family: var(--om-font);
+  font-size: var(--message-font-size, 0.8125rem);
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.65;
+  letter-spacing: 0;
+  word-spacing: 0;
+  text-align: left;
+  text-indent: 0;
+  text-transform: none;
+  tab-size: 4;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+  /* Ligatures could join across the coloured spans differently. */
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+}
+
+.vn-note-hl {
+  min-height: 100%;
+  color: var(--text);
+  pointer-events: none;
+}
+
+.vn-note-text {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  resize: none;
+  outline: none;
+  background: transparent;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  caret-color: var(--vn-accent);
+}
+
+.vn-note-text::selection {
+  background: color-mix(in srgb, var(--vn-accent) 30%, transparent);
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.vn-note-text::placeholder {
+  color: var(--vn-text-subtle);
+  -webkit-text-fill-color: var(--vn-text-subtle);
+  opacity: 1;
+}
+
+/* While an input method composes, its text shows in the textarea itself. */
+.vn-note-editor[data-composing] .vn-note-text { color: var(--text); -webkit-text-fill-color: var(--text); }
+.vn-note-editor[data-composing] .vn-note-hl { visibility: hidden; }
+
+.vn-md-mark { color: var(--vn-text-subtle); }
+.vn-md-heading { color: var(--syntax-heading); font-weight: 700; }
+.vn-md-heading .vn-md-mark { color: color-mix(in srgb, var(--syntax-heading) 55%, var(--om-background)); }
+.vn-md-bold { color: var(--om-bright-foreground); font-weight: 700; }
+.vn-md-italic { font-style: italic; }
+.vn-md-strike { color: var(--text-muted); text-decoration: line-through; }
+.vn-md-code { background: var(--om-fill-hover); color: var(--code-inline-text); }
+.vn-md-fence { color: var(--syntax-comment); }
+.vn-md-codeblock { color: var(--code-inline-text); }
+.vn-md-bullet { color: var(--syntax-bullet); font-weight: 700; }
+.vn-md-box { color: var(--vn-accent-text); }
+.vn-md-box-done { color: var(--om-green); }
+.vn-md-done { color: var(--vn-text-subtle); text-decoration: line-through; }
+.vn-md-quote-mark { color: var(--vn-accent-text); }
+.vn-md-quote { color: var(--text-muted); font-style: italic; }
+.vn-md-link { color: var(--link); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--link) 45%, transparent); }
+.vn-md-url { color: var(--vn-text-subtle); }
+.vn-md-hr { color: var(--vn-text-subtle); }
+
+.vn-note-preview {
+  padding: 14px 16px 64px;
+  font-size: var(--message-font-size, 0.8125rem);
+  line-height: 1.65;
+  overflow-wrap: break-word;
+}
+
+.vn-note-preview > :first-child { margin-top: 0; }
+.vn-note-preview .task-list-item { list-style: none; }
+
+.vn-note-preview .task-list-item > input {
+  margin: 0 0.45em 0 -1.35em;
+  vertical-align: -0.1em;
+  accent-color: var(--vn-accent);
+  cursor: pointer;
+}
+
+.vn-note-preview .task-list-item:has(> input:checked) { color: var(--vn-text-subtle); text-decoration: line-through; }
+.vn-note-empty { color: var(--vn-text-subtle); }
+
+.vn-note-foot {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  padding: 4px 6px calc(4px + var(--safe-bottom, 0px)) 14px;
+  border-top: 1px solid var(--border);
+}
+
+.vn-note-meta {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--vn-text-subtle);
+  font-size: 0.625rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Undo and other short news, framed like a popover above the foot. */
+.vn-notes-toast {
+  position: absolute;
+  right: 12px;
+  bottom: 52px;
+  left: 12px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 7px 7px 12px;
+  border: 2px solid var(--om-frame);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.6875rem;
+  animation: vn-rise var(--vn-med) var(--vn-ease) both;
+}
+
+.vn-notes-toast[hidden] { display: none; }
+
+.vn-notes-toast-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A note saved from a chat: a line back to it, under the head. */
+.vn-note-source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  min-width: 0;
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--vn-text-subtle);
+  font-size: 0.6875rem;
+  text-decoration: none;
+}
+
+.vn-note-source[hidden] { display: none; }
+.vn-note-source-icon { display: inline-grid; flex: none; }
+.vn-note-source-icon svg { width: 13px; height: 13px; }
+
+.vn-note-source-title {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--vn-accent-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vn-note-source:hover { background: var(--om-fill-hover); }
+.vn-note-source:hover .vn-note-source-title { text-decoration: underline; text-underline-offset: 2px; }
+.vn-note-source:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--vn-accent); }
+
+/* Saving a selection from the chat: a small framed button at its end
+ * (clip.js places it with left/top; it pops in). */
+.vn-clip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: calc(var(--z-dialog, 60) - 1);
+  display: flex;
+  border: 2px solid var(--om-frame);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.6875rem;
+  animation: vn-pop-in 140ms var(--vn-ease) both;
+}
+
+.vn-clip[hidden] { display: none; }
+
+.vn-clip button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--vn-fast) ease;
+}
+
+.vn-clip button[hidden] { display: none; }
+.vn-clip button:hover:not(:disabled) { background: var(--om-fill-hover); }
+.vn-clip button:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--vn-accent); }
+.vn-clip button:disabled { cursor: default; }
+.vn-clip svg { width: 14px; height: 14px; flex: none; }
+.vn-clip-save svg { color: var(--vn-accent-text); }
+.vn-clip-open { border-left: 1px solid var(--om-line) !important; color: var(--vn-accent-text) !important; }
+.vn-clip[data-state="saved"] .vn-clip-save svg { color: var(--om-green); }
+.vn-clip[data-state="error"] .vn-clip-save { color: var(--error-text); }
+.vn-clip[data-state="error"] .vn-clip-save svg { color: inherit; }
+
+@media (pointer: coarse) {
+  .vn-clip button { height: 36px; padding: 0 12px; }
+}
+
+/* A message reached from a note's link, marked for a moment. */
+.messages > [data-vn-flash] {
+  outline: 2px solid transparent;
+  outline-offset: 4px;
+  scroll-margin-top: 16px;
+  animation: vn-flash 2.2s ease-out both;
+}
+
+@keyframes vn-flash {
+  0%, 35% { outline-color: var(--vn-accent); }
+  100% { outline-color: transparent; }
+}
+
+:root[data-vn-type="comfortable"] .vn-note-row-title { font-size: 0.8125rem; }
+:root[data-vn-type="comfortable"] .vn-note-row-snippet { font-size: 0.75rem; }
+:root[data-vn-type="comfortable"] .vn-clip { font-size: 0.75rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vn-notes-toast,
+  .vn-clip { animation: none; }
+  .messages > [data-vn-flash] { animation: none; outline-color: var(--vn-accent); }
+}
+
+/* Phones: the panel covers the screen, with its own close. */
+@media (width <= 767px) {
+  .vn-notes { width: 100%; border-left: 0; padding-right: 0; }
+  .vn-notes-head { min-height: 0; } /* the chat header is under the panel here */
+  .vn-notes-grip { display: none; }
+  .vn-notes-search { height: 38px; font-size: 16px; }
+  .vn-note-hl,
+  .vn-note-text { font-size: 16px; } /* no zoom-on-focus on iOS */
+  .vn-notes-btn { min-width: 36px; height: 36px; }
+}
+
+/* ===================================================================
  * Personal assistant (term-llm --personal-bot)
  *
  * That interface paints itself from its own --pb-* palette and themes. With

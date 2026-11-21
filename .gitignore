@@ -7,3 +7,6 @@ tools/node_modules/
 tools/out/
 
 .DS_Store
+
+# Python bytecode (tests import widget/server.py)
+__pycache__/

@@ -1,0 +1,13 @@
+[
+  { "body": "", "title": "", "snippet": "" },
+  { "body": "Groceries", "title": "Groceries", "snippet": "" },
+  { "body": "# Plan for **Q3**\n\n- [ ] ship the [notes](https://example.com) panel\n- [x] test", "title": "Plan for Q3", "snippet": "ship the notes panel" },
+  { "body": "\n\n   \n> quoted *start*\nnext", "title": "quoted start", "snippet": "next" },
+  { "body": "```js\nconst a = 1;\n```\nafter", "title": "const a = 1;", "snippet": "after" },
+  { "body": "1. first item\n2) second", "title": "first item", "snippet": "second" },
+  { "body": "  ##   Spaced   heading  \nbody   text", "title": "Spaced heading", "snippet": "body text" },
+  { "body": "![diagram](a.png) caption", "title": "diagram caption", "snippet": "" },
+  { "body": "rename snake_case_name\n_italic_ and __bold__", "title": "rename snake_case_name", "snippet": "italic and bold" },
+  { "body": "~~old~~ new `code`", "title": "old new code", "snippet": "" },
+  { "body": "Windows\r\nline\r\nendings", "title": "Windows", "snippet": "line" }
+]

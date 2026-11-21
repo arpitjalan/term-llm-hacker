@@ -17,6 +17,8 @@ import { createTabNotifier } from "./notify.js";
 import { createNodeFavicon } from "./favicon.js";
 import { createHome } from "./home.js";
 import { createSidebarNav } from "./nav.js";
+import { createNotes } from "./notes.js";
+import { createClipper, revealFromAddress } from "./clip.js";
 // The modules above import these. Naming them here too makes the browser
 // request every module as soon as main.js arrives, instead of finding these
 // one round trip later: on a distant agent that delays the theme by a few
@@ -24,6 +26,7 @@ import { createSidebarNav } from "./nav.js";
 import "./themes.js";
 import "./colors.js";
 import "./arrivals.js";
+import "./markdown.js";
 
 const SCHEMES = [
   { id: "system", name: "System" },
@@ -462,17 +465,24 @@ function createThemePicker(theme, mount) {
 
   function ensureButton(root) {
     const row = root.querySelector(".main-header .header-controls-row");
-    if (!row || row.querySelector(":scope > .vn-theme-btn")) return;
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "vn-theme-btn";
-    button.setAttribute("aria-label", "Appearance and accent color");
-    button.setAttribute("aria-haspopup", "dialog");
-    button.setAttribute("aria-expanded", "false");
-    button.title = "Appearance";
-    button.innerHTML = ICONS.palette;
-    button.addEventListener("click", () => open(button));
-    row.append(button);
+    if (!row) return;
+    let button = row.querySelector(":scope > .vn-theme-btn");
+    if (!button) {
+      button = document.createElement("button");
+      button.type = "button";
+      button.className = "vn-theme-btn";
+      button.setAttribute("aria-label", "Appearance and accent color");
+      button.setAttribute("aria-haspopup", "dialog");
+      button.setAttribute("aria-expanded", "false");
+      button.title = "Appearance";
+      button.innerHTML = ICONS.palette;
+      button.addEventListener("click", () => open(button));
+    }
+    // After term-llm's own controls, which opening a chat renders after it
+    // (into the row it showed empty while loading). Only Notes may follow it.
+    let next = button.nextElementSibling;
+    if (next?.matches(".vn-notes-toggle")) next = next.nextElementSibling;
+    if (button.parentElement !== row || next) row.append(button);
   }
 
   function onResize() {
@@ -797,7 +807,9 @@ export async function activate(api) {
   const extras = createComposerExtras(root, api);
   const foot = createSidebarFoot(root);
   const nav = createSidebarNav(root);
-  const palette = createPalette(root, { theme, thread, nav });
+  const notes = createNotes(root, { mount });
+  const clipper = createClipper(root, { mount, notes });
+  const palette = createPalette(root, { theme, thread, nav, notes });
   const notifier = createTabNotifier(root);
   const favicon = createNodeFavicon(root);
   const home = createHome(root, { theme });
@@ -810,6 +822,7 @@ export async function activate(api) {
     nav.sync();
     favicon.sync();
     picker.ensureButton(root);
+    notes.sync();
     bar.sync();
     floating.sync();
     extras.sync();
@@ -847,14 +860,19 @@ export async function activate(api) {
   }
 
   const observer = new MutationObserver((records) => {
+    let relevant = false;
     for (const r of records) {
+      const t = r.target;
+      // The notes panel repaints its editor on every keystroke, and the
+      // save-a-note button its label; nothing else depends on either.
+      if (t instanceof Element && t.closest(".vn-notes, .vn-clip")) continue;
+      relevant = true;
       for (const n of r.addedNodes) {
         if (n.nodeType === 1) pending.add(n);
       }
-      const t = r.target;
       if (!(t instanceof Element) || !t.closest(".messages")) fullSoon = true;
     }
-    frame ||= requestAnimationFrame(flush);
+    if (relevant) frame ||= requestAnimationFrame(flush);
   });
 
   // Attribute changes on the runtime trigger (label, effort, lock state).
@@ -879,6 +897,18 @@ export async function activate(api) {
   tick();
   observer.observe(document.body, { childList: true, subtree: true });
 
+  // The notes widget's own page (term-llm's Widgets list) leads here with
+  // #notes; a note's link to a message carries #message-<id>. Either on
+  // load, or typed into this tab.
+  const onHash = () => {
+    if (location.hash === "#notes") {
+      history.replaceState(history.state, "", location.pathname + location.search);
+      notes.openPanel();
+    } else revealFromAddress(root);
+  };
+  onHash();
+  window.addEventListener("hashchange", onHash);
+
   let disposed = false;
   localConfig.then((changed) => {
     if (!changed || disposed) return;
@@ -891,10 +921,13 @@ export async function activate(api) {
     disposed = true;
     observer.disconnect();
     attrObserver.disconnect();
+    window.removeEventListener("hashchange", onHash);
     cancelAnimationFrame(frame);
     clearTimeout(throttle);
     foot.dispose();
     nav.dispose();
+    clipper.dispose();
+    notes.dispose();
     agents.dispose();
     picker.dispose();
     bar.dispose();

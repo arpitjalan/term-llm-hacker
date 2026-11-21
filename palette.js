@@ -37,6 +37,7 @@ const ICON = {
   action: '<path d="M13 3 5 14h6l-1 7 8-11h-6z"/>',
   search: '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/>',
   routine: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
+  note: '<rect x="5" y="3" width="15" height="18" rx="2"/><path d="M9 3v18M12.5 8h4M12.5 12h4M12.5 16h2.5"/>',
   theme: '<path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/>',
 };
 
@@ -87,7 +88,7 @@ function highlight(text, marks) {
   return span;
 }
 
-export function createPalette(root, { theme, thread, nav }) {
+export function createPalette(root, { theme, thread, nav, notes }) {
   let overlay = null;
   let input = null;
   let list = null;
@@ -138,12 +139,15 @@ export function createPalette(root, { theme, thread, nav }) {
       ["Toggle file changes panel", "", click("#diffToggleBtn")],
       ["Focus message box", "", () => root.querySelector(".composer .prompt")?.focus()],
       ["Change model and effort", "", click(".vn-chip-runtime")],
+      [notes?.shown() ? "Close notes" : "Open notes", "Notes panel", () => notes.toggle()],
+      ["New note", "Notes", () => notes.newNote()],
     ];
     for (const [title, hint, run] of actions) {
       if (title === "Open widgets" && !root.querySelector("#widgetsOpenBtn:not(.hidden)")) continue;
       if (title === "Open routines" && !nav?.hasRoutines()) continue;
       if (title === "Show activity" && !nav?.shown()) continue;
       if (title === "Toggle file changes panel" && !root.querySelector("#diffToggleBtn")) continue;
+      if (hint.startsWith("Notes") && !notes) continue;
       out.push({ group: "Actions", icon: "action", title, hint, run });
     }
 
@@ -200,6 +204,11 @@ export function createPalette(root, { theme, thread, nav }) {
     // Routines, by name: the last run's chat, or the list if it hasn't run.
     for (const r of nav?.routineItems() ?? []) {
       out.push({ group: "Routines", icon: "routine", title: r.name, hint: r.hint, run: () => nav.openRoutine(r) });
+    }
+
+    // Notes, by title, once the notes panel has loaded them on this page.
+    for (const n of notes?.items() ?? []) {
+      out.push({ group: "Notes", icon: "note", title: n.title || "Untitled", hint: n.snippet || "", run: () => notes.openNote(n.id) });
     }
 
     // Slash commands
@@ -423,6 +432,9 @@ export function createPalette(root, { theme, thread, nav }) {
     // Routines are listed by name once known; only searches show them, so
     // the default view does not shift under the selection.
     nav?.loadRoutineItems().then(() => {
+      if (overlay && !disposed && input.value.trim()) render();
+    });
+    notes?.loadItems().then(() => {
       if (overlay && !disposed && input.value.trim()) render();
     });
   }
