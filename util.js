@@ -73,11 +73,11 @@ export const NODE_ACCENTS = {};
 // Optional per-node tile glyphs, keyed by Hub node id or display name, also
 // from local.json. Values are glyph names from GLYPHS; anything else is ignored.
 export const NODE_ICONS = {};
-export const GLYPHS = ["laptop", "cloud", "box", "sparkle", "home", "server", "core", "monogram"];
+const GLYPHS = ["laptop", "cloud", "box", "sparkle", "home", "server", "core", "monogram"];
 
 // Tile glyphs, drawn white on transparent: the sidebar cuts them out of the
 // tile (a mask, so only their shape counts) and the favicon recolours them.
-const GLYPH_SVGS = {
+export const GLYPH_SVGS = {
   laptop: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><rect x='4' y='5' width='16' height='11' rx='2'/><path d='M2 19h20'/></svg>",
   cloud: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 8.5a4.75 4.75 0 0 1-.5 9.5z'/></svg>",
   box: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3 4 7v10l8 4 8-4V7z'/><path d='m4 7 8 4 8-4M12 11v10'/></svg>",
@@ -182,7 +182,7 @@ export function nodeAccent(nodeId) {
 }
 
 // The app suffixes its own storage keys with ":<nodeId>" under the Hub.
-export function appKey(base) {
+function appKey(base) {
   return NODE_ID ? `${base}:${NODE_ID}` : base;
 }
 
@@ -228,27 +228,22 @@ export function loadProviders() {
   return providersPromise;
 }
 
-// Provider the next reply will use: the user's runtime pick (read live from
-// the app's own storage key), else the server default. Synchronous, using
-// the cached provider list; returns { name, type } or null when unknown.
-export function currentProviderSync() {
-  const selected = read(appKey("term_llm_selected_provider"), null);
-  const list = providersCache ?? [];
-  const match = selected
-    ? list.find((p) => p.name === selected)
-    : list.find((p) => p.is_default);
-  if (match) return { name: match.name, type: match.type || match.name };
-  return selected ? { name: selected, type: selected } : null;
-}
-
-// Provider type for a provider name ("" means the server default).
-export function providerTypeSync(name) {
-  const list = providersCache ?? [];
-  const match = name ? list.find((p) => p.name === name) : list.find((p) => p.is_default);
-  return match ? match.type || match.name : name || "";
+// Name of the provider the next reply will use: the user's runtime pick (read
+// live from the app's own storage key), else the server default from the
+// cached provider list. Null when unknown.
+export function currentProviderName() {
+  return read(appKey("term_llm_selected_provider"), null) ||
+    (providersCache ?? []).find((p) => p.is_default)?.name || null;
 }
 
 /* ------------------------------------------------------------- misc */
+
+export const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+
+// Text made safe for HTML or SVG markup, in content and in quoted attributes.
+export function escapeXml(value) {
+  return String(value).replace(/[<>&"']/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" })[c]);
+}
 
 export function el(tag, attrs = {}, children = []) {
   const node = document.createElement(tag);
@@ -264,9 +259,11 @@ export function el(tag, attrs = {}, children = []) {
   return node;
 }
 
-// The app is "running" while its Stop button is visible.
+// The app is "running" while it offers Stop: its own Stop button (beside a
+// draft), or, with nothing typed, the send button turned into Stop
+// (term-llm 0.9.92 and later).
 export function isRunning(root) {
-  return Boolean(root.querySelector(".composer .stop-btn.visible"));
+  return Boolean(root.querySelector(".composer .stop-btn.visible, .composer #sendBtn.stop"));
 }
 
 export function formatDuration(ms) {

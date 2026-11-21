@@ -131,7 +131,6 @@
   --om-fill: color-mix(in srgb, var(--om-foreground) 4%, transparent);
   --om-fill-hover: color-mix(in srgb, var(--om-foreground) 8%, transparent);
   --om-fill-selected: color-mix(in srgb, var(--om-foreground) 18%, transparent);
-  --om-fill-pressed: color-mix(in srgb, var(--om-foreground) 22%, transparent);
   --om-line: color-mix(in srgb, var(--om-foreground) 40%, transparent);
   --om-line-hover: color-mix(in srgb, var(--om-foreground) 25%, transparent);
   --om-line-soft: color-mix(in srgb, var(--om-foreground) 12%, transparent);
@@ -206,7 +205,6 @@
   --vn-user-bubble: color-mix(in srgb, var(--om-foreground) 8%, var(--om-background));
 
   /* The app's theme seeds and component tokens. */
-  --gradient-accent: var(--surface-2);
   --gradient-accent-strong: var(--vn-accent);
   --accent-blue: var(--vn-accent);
   --accent-hover: color-mix(in srgb, var(--vn-accent) 88%, var(--om-foreground));
@@ -229,7 +227,6 @@
   --vn-ease: cubic-bezier(0.23, 1, 0.32, 1);
   --vn-fast: 120ms;
   --vn-med: 180ms;
-  --vn-slow: 250ms;
 
   /* Syntax, as Omarchy's editor themes colour it. */
   --syntax-text: var(--om-foreground);
@@ -363,7 +360,6 @@ button,
 input,
 textarea,
 select,
-.diff-note,
 .diff-image-label,
 .diff-show-more,
 .diff-comment-panel {
@@ -1967,7 +1963,7 @@ a {
 .vn-meter i.on { opacity: 1; background: var(--vn-accent); }
 
 /* Runtime popover anchored above the composer chips. */
-:root[data-vn-runtime-anchor] .chip-popover-runtime {
+:root[data-vn-composer-bar] .chip-popover-runtime {
   inset: auto auto var(--vn-pop-bottom, 96px) var(--vn-pop-left, 24px) !important;
   transform-origin: bottom left;
 }
@@ -3801,9 +3797,6 @@ input[type="radio"] { accent-color: var(--vn-accent); }
 .plan-panel { border-left-color: var(--border); }
 .plan-progress-track { background: var(--om-fill-hover); overflow: hidden; }
 .plan-progress-track > span { background: var(--vn-accent); }
-.current-plan-step-in-progress .current-plan-step-marker,
-.current-plan-step-in .current-plan-step-marker { color: var(--vn-accent); }
-.current-plan-step-completed .current-plan-step-marker { color: var(--accent-green); }
 .plan-sheet-handle { background: var(--border-strong); }
 
 /* Approvals & questions (inline cards and modal) */
@@ -4010,7 +4003,7 @@ input[type="radio"] { accent-color: var(--vn-accent); }
     transform-origin: top right;
   }
 
-  :root[data-vn-runtime-anchor] .chip-popover-runtime[open],
+  :root[data-vn-composer-bar] .chip-popover-runtime[open],
   :root[data-vn-composer-bar] .chip-popover.context-popover[open] {
     animation-name: vn-pop-up;
   }
@@ -4107,18 +4100,18 @@ input[type="radio"] { accent-color: var(--vn-accent); }
     z-index: 2;
   }
 
-  :root[data-vn-runtime-anchor] .chip-popover-runtime,
+  :root[data-vn-composer-bar] .chip-popover-runtime,
   :root[data-vn-composer-bar] .chip-popover.context-popover {
     inset: auto 0.5rem max(0.5rem, env(safe-area-inset-bottom, 0.5rem)) 0.5rem !important;
   }
 
-  :root[data-vn-runtime-anchor] .chip-popover-runtime {
+  :root[data-vn-composer-bar] .chip-popover-runtime {
     /* Native dialog sizing can exceed the space between the sheet gutters. */
     min-width: 0;
     max-width: calc(100vw - 1rem);
   }
 
-  :root[data-vn-runtime-anchor] .chip-popover-runtime .runtime-popover-heading {
+  :root[data-vn-composer-bar] .chip-popover-runtime .runtime-popover-heading {
     white-space: normal;
   }
 
@@ -4155,7 +4148,7 @@ input[type="radio"] { accent-color: var(--vn-accent); }
 @media (width <= 767px) and (prefers-reduced-motion: no-preference) {
   .modal-overlay:not(.hidden) > .modal { animation: vn-sheet-in 250ms var(--vn-ease) both; }
 
-  :root[data-vn-runtime-anchor] .chip-popover-runtime[open],
+  :root[data-vn-composer-bar] .chip-popover-runtime[open],
   .chip-popover[open] { animation: vn-sheet-in 250ms var(--vn-ease) both; }
 
   .vn-popover { animation: vn-sheet-in 250ms var(--vn-ease) both; }

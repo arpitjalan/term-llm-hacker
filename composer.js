@@ -1,23 +1,20 @@
 // Composer extras: a context-usage ring, and a Compact button near the limit.
 
-import { el, formatTokens } from "./util.js";
-
-/* ---------------------------------------------------------- context ring */
+import { el, formatTokens, isRunning } from "./util.js";
+import { setComposerText } from "./thread.js";
 
 const COMPACT_ICON =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="m14 10 7-7"/><path d="m3 21 7-7"/></svg>';
 
-// Set the composer text the way typing would, so the app's own input
-// handler updates its state.
-function setPrompt(ta, value) {
-  const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value").set;
-  setter.call(ta, value);
-  ta.dispatchEvent(new Event("input", { bubbles: true }));
-}
-
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
 
-function createContextRing(root, api) {
+// The ring sits in the composer, inside the subtree main.js observes: write
+// its text only when it changes, or every pass would start another one.
+function setText(node, text) {
+  if (node.textContent !== text) node.textContent = text;
+}
+
+export function createComposerExtras(root, api) {
   let ring = null;
   let compact = null;
   let compacting = false;
@@ -81,12 +78,13 @@ function createContextRing(root, api) {
     compact.disabled = true;
     const draft = ta.value;
     try {
-      setPrompt(ta, "/compact");
+      setComposerText(root, "/compact", { focus: false });
       await nextFrame();
+      // Never press the send button while it is a Stop button (a run started).
       const send = root.querySelector("#sendBtn");
-      if (send && !send.disabled && !send.classList.contains("live")) send.click();
+      if (send && !send.disabled && !send.classList.contains("live") && !send.classList.contains("stop")) send.click();
       await nextFrame();
-      if (ta.value !== draft) setPrompt(ta, draft);
+      if (ta.value !== draft) setComposerText(root, draft, { focus: false });
     } finally {
       compacting = false;
       compact.disabled = false;
@@ -97,7 +95,7 @@ function createContextRing(root, api) {
   // Compaction cannot start while a reply runs or another compaction is
   // in progress (the app ignores it), so only offer it when it will work.
   function canCompact() {
-    return !root.querySelector("#stopBtn") && !root.querySelector(".composer .compaction-status");
+    return !isRunning(root) && !root.querySelector(".composer .compaction-status");
   }
 
   function render() {
@@ -138,8 +136,7 @@ function createContextRing(root, api) {
     }
     const fill = ring.querySelector(".vn-context-fill");
     fill.setAttribute("stroke-dashoffset", String(pct == null ? C : C * (1 - pct / 100)));
-    const label = pct == null ? formatTokens(used) : `${Math.round(pct)}%`;
-    ring.querySelector(".vn-context-label").textContent = label;
+    setText(ring.querySelector(".vn-context-label"), pct == null ? formatTokens(used) : `${Math.round(pct)}%`);
 
     const lines = [
       pct == null
@@ -152,7 +149,7 @@ function createContextRing(root, api) {
     const offerCompact = level === "critical" && (compacting || canCompact());
     compact.hidden = !offerCompact;
     if (level === "critical") lines.push(offerCompact ? "Near the limit" : "Near the limit: consider /compact");
-    ring.querySelector(".vn-context-tip").textContent = lines.join(" · ");
+    setText(ring.querySelector(".vn-context-tip"), lines.join(" · "));
     ring.setAttribute("aria-label", `Context usage: ${lines.join(", ")}`);
   }
 
@@ -169,8 +166,4 @@ function createContextRing(root, api) {
       compact?.remove();
     },
   };
-}
-
-export function createComposerExtras(root, api) {
-  return createContextRing(root, api);
 }

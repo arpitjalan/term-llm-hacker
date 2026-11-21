@@ -8,7 +8,7 @@
 import {
   KEYS, ACCENTS, NODE_ID, html, reducedMotion, read, write, nodeAccent, normalizeAccent,
   THEMES, DEFAULT_DARK, DEFAULT_LIGHT, themeById, roleColor, applyPalette, clearPalette, glyphUrl,
-  setApiPrefix, loadLocalConfig, restoreLocalConfig, NODE_ICONS, NODE_IMAGES,
+  setApiPrefix, loadLocalConfig, restoreLocalConfig, NODE_ICONS, NODE_IMAGES, escapeXml,
 } from "./util.js";
 import { createThread } from "./thread.js";
 import { createComposerExtras } from "./composer.js";
@@ -284,8 +284,6 @@ function createThemePicker(theme, mount) {
     }
   }
 
-  const esc = (text) => String(text).replace(/[<>&"']/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" })[c]);
-
   // A theme's tile: a tiny terminal in its own colours (see .vn-theme-tile).
   const tileStyle = ({ colors: c }) =>
     `--t-bg:${c.background};--t-fg:${c.foreground};--t-accent:${c.accent};` +
@@ -303,7 +301,7 @@ function createThemePicker(theme, mount) {
     return `
       <span class="vn-popover-label" id="vn-${mode}-theme-label"${theme.resolved === mode ? " data-active" : ""}>${mode === "dark" ? "Dark theme" : "Light theme"}</span>
       <div class="vn-themes" role="radiogroup" aria-labelledby="vn-${mode}-theme-label" data-mode="${mode}">
-        ${THEMES.filter((t) => t.mode === mode).map((t) => `<button type="button" class="vn-theme-tile" role="radio" data-theme="${t.id}" aria-label="${esc(t.name)}" title="${esc(t.name)}" aria-checked="${t.id === chosen}" style="${tileStyle(t)}"></button>`).join("")}
+        ${THEMES.filter((t) => t.mode === mode).map((t) => `<button type="button" class="vn-theme-tile" role="radio" data-theme="${t.id}" aria-label="${escapeXml(t.name)}" title="${escapeXml(t.name)}" aria-checked="${t.id === chosen}" style="${tileStyle(t)}"></button>`).join("")}
       </div>
       <div class="vn-theme-name" data-mode="${mode}" aria-hidden="true"></div>`;
   };
@@ -560,8 +558,8 @@ function createComposerBar(root) {
     }
     if (!bar) build();
     if (bar.parentElement !== box) box.append(bar);
+    // Also anchors the app's runtime popover above the chip (style.css).
     html.setAttribute("data-vn-composer-bar", "");
-    html.setAttribute("data-vn-runtime-anchor", "");
 
     const model = trigger.querySelector(".chip-label")?.textContent.trim() || "Auto";
     const level = trigger.getAttribute("data-effort-level") || "auto";
@@ -598,7 +596,6 @@ function createComposerBar(root) {
     dispose() {
       bar?.remove();
       html.removeAttribute("data-vn-composer-bar");
-      html.removeAttribute("data-vn-runtime-anchor");
     },
   };
 }
@@ -672,9 +669,8 @@ function createAgentSection(root) {
   // text through ::before, so the letters become the same kind of image the
   // other glyphs are: a shape style.css cuts out of the tile.
   function monogramGlyph(letters) {
-    const text = letters.replace(/[<>&"']/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" })[c]);
     const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'><text x='11' y='11.5' text-anchor='middle' dominant-baseline='central' fill='white' ` +
-      `font-family='ui-monospace,SF Mono,Menlo,monospace' font-size='9.5' font-weight='800'>${text}</text></svg>`;
+      `font-family='ui-monospace,SF Mono,Menlo,monospace' font-size='9.5' font-weight='800'>${escapeXml(letters)}</text></svg>`;
     return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
   }
 

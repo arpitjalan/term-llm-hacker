@@ -6,30 +6,14 @@
 // decorated it. notify.js badges whatever base icon this sets (see
 // data-vn-base / data-vn-badged on the <link>).
 
-import { THEMES, DEFAULT_DARK, NODE_ID, html, nodeAccent, roleColor, themeById } from "./util.js";
+import { THEMES, DEFAULT_DARK, NODE_ID, GLYPH_SVGS, html, nodeAccent, roleColor, themeById, escapeXml } from "./util.js";
 
 const FALLBACK_AFTER_MS = 4000;
-
-function escapeXml(value) {
-  return String(value).replace(/[<>&"']/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" })[c]);
-}
-
-// The glyph lives in style.css as a white data URL; reuse it so the two never drift.
-function glyphFrom(icon) {
-  const raw = getComputedStyle(icon).getPropertyValue("--vn-glyph").trim();
-  const match = raw.match(/^url\(\s*["']?data:image\/svg\+xml,([\s\S]*?)["']?\s*\)$/);
-  if (!match) return "";
-  try {
-    return decodeURIComponent(match[1]);
-  } catch {
-    return "";
-  }
-}
 
 // The sidebar tile, flat: the accent as the current theme paints it, with
 // the glyph in the theme's background as if cut out of it (as the sidebar
 // draws it), square unless corners are rounded.
-export function tileSvg({ accentId, kind, glyph, initials, themeId = html.dataset.vnTheme, rounded = html.dataset.vnCorners === "rounded" }) {
+function tileSvg({ accentId, kind, glyph, initials, themeId = html.dataset.vnTheme, rounded = html.dataset.vnCorners === "rounded" }) {
   const theme = themeById(themeId) ?? themeById(DEFAULT_DARK) ?? THEMES[0];
   const fill = roleColor(theme, accentId);
   const ink = theme.colors.background;
@@ -57,16 +41,18 @@ export function createNodeFavicon(root, nodeId = NODE_ID) {
   let lastSvg = "";
   const startedAt = performance.now();
 
+  // main.js has decorated the tile: its kind, initials, and (for a picture)
+  // the url() it set inline. Reading those needs no style recalculation.
   function currentTile() {
     const icon = root.querySelector('.hub-agent-link[aria-current="true"] .hub-agent-icon');
     const kind = icon?.dataset.vnKind;
     if (!icon || !kind) return null;
     if (kind === "image") {
       // A local.json picture is the tab icon as it is: the picture says it all.
-      const src = getComputedStyle(icon).getPropertyValue("--vn-glyph").trim().match(/^url\(\s*["']?(.*?)["']?\s*\)$/)?.[1];
+      const src = icon.style.getPropertyValue("--vn-glyph").trim().match(/^url\(\s*["']?(.*?)["']?\s*\)$/)?.[1];
       return src ? { kind, src } : null;
     }
-    return { kind, glyph: kind === "monogram" ? "" : glyphFrom(icon), initials: icon.dataset.vnInitials || "" };
+    return { kind, glyph: GLYPH_SVGS[kind] ?? "", initials: icon.dataset.vnInitials || "" };
   }
 
   function apply(svg, picture = null) {

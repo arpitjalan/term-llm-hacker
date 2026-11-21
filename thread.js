@@ -17,8 +17,7 @@ const SVG = {
 
 const LANG_ALIASES = {
   js: "javascript", ts: "typescript", rb: "ruby", py: "python", sh: "shell",
-  bash: "bash", zsh: "zsh", yml: "yaml", md: "markdown", text: "text",
-  plaintext: "text", gjs: "glimmer", hbs: "handlebars",
+  yml: "yaml", md: "markdown", plaintext: "text", gjs: "glimmer", hbs: "handlebars",
 };
 
 // Tool name -> icon kind used by the timeline (CSS draws the glyph).

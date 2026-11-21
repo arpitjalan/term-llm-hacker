@@ -8,7 +8,7 @@
 // controls, so it never needs an API of its own. The app's heading and
 // tagline stay in the DOM, hidden while this panel stands in for them.
 
-import { el, NODE_ID, currentProviderSync, loadProviders } from "./util.js";
+import { el, NODE_ID, currentProviderName, loadProviders, isMac } from "./util.js";
 
 // ">_" as pixel art: a chevron and an underscore on a 7 x 5 grid, drawn as
 // SVG squares so it stays crisp at any size and in any font.
@@ -63,7 +63,6 @@ function pickLine() {
 }
 
 export function createHome(root, { theme }) {
-  const mac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
   const line = pickLine();
   let block = null;
   let keys = null;
@@ -94,11 +93,10 @@ export function createHome(root, { theme }) {
       .find((g) => /^today\b/i.test(g.querySelector(":scope > h3")?.textContent.trim() ?? ""))
       ?.querySelectorAll(":scope > .session-row").length ?? 0;
     const trigger = root.querySelector(".header-stats .model-chip-primary .chip-trigger");
-    const provider = currentProviderSync();
     const t = theme.theme;
     return {
       name: text("#sidebarBrandText") || text(".empty-chat > h2") || "term-llm",
-      model: [trigger?.querySelector(".chip-label")?.textContent.trim() || "auto", provider?.name].filter(Boolean).join(" · "),
+      model: [trigger?.querySelector(".chip-label")?.textContent.trim() || "auto", currentProviderName()].filter(Boolean).join(" · "),
       effort: EFFORTS[trigger?.getAttribute("data-effort-level") || "auto"] ?? trigger?.getAttribute("data-effort-level"),
       chats: all.length ? `${all.length} in the sidebar${today ? ` · ${today} today` : ""}` : "none yet",
       counts: Object.fromEntries(STATES.map((s) => [s.key, all.filter((r) => r.classList.contains(s.cls)).length])),
@@ -188,10 +186,10 @@ export function createHome(root, { theme }) {
     ]);
     const kbd = (k, label) => el("span", { class: "vn-home-key" }, [el("kbd", { class: "vn-kbd", text: k }), label]);
     keys = el("div", { class: "vn-home-keys", role: "note", "aria-label": "Keyboard shortcuts" }, [
-      kbd(mac ? "⌘K" : "Ctrl K", "launcher"),
+      kbd(isMac ? "⌘K" : "Ctrl K", "launcher"),
       kbd("/", "commands"),
       kbd("⏎", "send"),
-      kbd(mac ? "⇧⏎" : "Shift ⏎", "new line"),
+      kbd(isMac ? "⇧⏎" : "Shift ⏎", "new line"),
     ]);
   }
 

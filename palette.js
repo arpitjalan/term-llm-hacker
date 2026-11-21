@@ -1,7 +1,7 @@
 // ⌘K command palette: chats, agents, slash commands, and UI actions in one
 // keyboard-driven list. Every action goes through the app's own controls.
 
-import { ACCENTS, THEMES, el } from "./util.js";
+import { ACCENTS, THEMES, el, isMac } from "./util.js";
 import { composerText, setComposerText } from "./thread.js";
 
 // Slash commands from the app. `run` = execute immediately (only when the
@@ -441,8 +441,7 @@ export function createPalette(root, { theme, thread, nav }) {
   // ⌘K / Ctrl+K. Capture phase so it wins over the app's ⌘K (Widgets),
   // which stays reachable as "Open widgets" in the palette.
   const onGlobalKey = (event) => {
-    const mac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
-    const mod = mac ? event.metaKey && !event.ctrlKey : event.ctrlKey && !event.metaKey;
+    const mod = isMac ? event.metaKey && !event.ctrlKey : event.ctrlKey && !event.metaKey;
     if (mod && !event.altKey && !event.shiftKey && (event.key === "k" || event.key === "K")) {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -455,8 +454,7 @@ export function createPalette(root, { theme, thread, nav }) {
   function ensureHint() {
     const wrap = root.querySelector(".sidebar-search-wrap");
     if (!wrap || wrap.querySelector(":scope > .vn-search-kbd")) return;
-    const mac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
-    const hint = el("button", { type: "button", class: "vn-search-kbd", title: "Command palette", "aria-label": "Open command palette", text: mac ? "⌘K" : "Ctrl K" });
+    const hint = el("button", { type: "button", class: "vn-search-kbd", title: "Command palette", "aria-label": "Open command palette", text: isMac ? "⌘K" : "Ctrl K" });
     hint.addEventListener("click", open);
     wrap.append(hint);
   }
