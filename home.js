@@ -29,15 +29,18 @@ const LINES = [
   "Ready when you are.",
 ];
 
-// Section frames, as fastfetch draws them: a rule with the title on it, as
-// wide (in characters) as the longest line needs.
+// Section frames, as fastfetch draws them: a rule with the title on it. A
+// section is as wide (in characters) as its longest line needs, or the space
+// there is; the rule's dashes stretch, so the frame stays closed either way.
 const KEY_WIDTH = 12; // "│ ├ " and the longest key
-const rule = (title, width) => {
-  if (!title) return `└${"─".repeat(width - 2)}┘`;
-  const label = ` ${title} `;
-  const left = Math.floor((width - 2 - label.length) / 2);
-  return `┌${"─".repeat(left)}${label}${"─".repeat(width - 2 - left - label.length)}┐`;
+const DASHES = "─".repeat(96);
+const rule = (title) => {
+  const fill = () => el("span", { class: "vn-fetch-fill", text: DASHES });
+  return el("div", { class: "vn-fetch-rule", "aria-hidden": "true" },
+    title ? ["┌", fill(), ` ${title} `, fill(), "┐"] : ["└", fill(), "┘"]);
 };
+// The mark beside the boxes, and the gap between, in the boxes' em.
+const LOGO_ROOM_EM = 7.6 + 2.6;
 
 // Session states the sidebar marks on its rows, and what they mean here.
 const STATES = [
@@ -111,9 +114,9 @@ export function createHome(root, { theme }) {
     row?.querySelector(".session-btn")?.click();
   }
 
-  function section(title, tone, entries, width) {
-    return el("div", { class: `vn-fetch-section vn-fetch-${tone}`, style: `width:${width}ch` }, [
-      el("div", { class: "vn-fetch-rule", "aria-hidden": "true", text: rule(title, width) }),
+  function section(title, tone, entries) {
+    return el("div", { class: `vn-fetch-section vn-fetch-${tone}` }, [
+      rule(title),
       el("dl", { class: "vn-fetch-list" }, entries.map(([k, v], i) =>
         el("div", { class: "vn-fetch-row" }, [
           el("dt", {}, [
@@ -123,7 +126,7 @@ export function createHome(root, { theme }) {
           el("dd", {}, [v]),
         ]),
       )),
-      el("div", { class: "vn-fetch-rule", "aria-hidden": "true", text: rule("", width) }),
+      rule(""),
     ]);
   }
 
@@ -157,14 +160,38 @@ export function createHome(root, { theme }) {
       ["name", f.name],
       ["model", f.model],
       ["effort", f.effort],
-    ], width);
+    ]);
     const workspace = section("workspace", "blue", [
       ["chats", f.chats],
       ["status", statusLine(f.counts)],
       ["theme", el("span", {}, [f.theme, " ", palette()])],
       ...(f.node ? [["node", f.node]] : []),
-    ], width);
+    ]);
+    // As wide as the longest line, or the chat, whichever is narrower.
+    block.querySelector(".vn-fetch").style.setProperty("--vn-fetch-w", `${width}ch`);
     block.querySelector(".vn-fetch-info").replaceChildren(agent, workspace);
+    fitLogo();
+  }
+
+  // The boxes keep to the chat's centre line, like everything below them;
+  // the mark hangs to their left while the chat has room for it there (it is
+  // out of the flow, so showing it never moves the boxes). A narrow chat (a
+  // sidebar and the notes panel both open) also leaves out the key hints, so
+  // the panel still fits above the message box. Checked again whenever the
+  // chat's width changes: a sidebar or the notes panel opening, or the
+  // window resizing.
+  let scroller = null;
+  const resized = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => fitLogo());
+  function fitLogo() {
+    const fetch = block?.querySelector(".vn-fetch");
+    if (!fetch || !scroller) return;
+    const boxes = fetch.querySelector(".vn-fetch-info").getBoundingClientRect();
+    const edge = scroller.getBoundingClientRect().left + scroller.clientLeft;
+    const room = boxes.left - edge - 8;
+    const away = !boxes.width || room < parseFloat(getComputedStyle(fetch).fontSize) * LOGO_ROOM_EM;
+    if (fetch.hasAttribute("data-no-logo") !== away) fetch.toggleAttribute("data-no-logo", away);
+    const narrow = block.offsetWidth < 520;
+    if (keys && keys.hasAttribute("data-narrow") !== narrow) keys.toggleAttribute("data-narrow", narrow);
   }
 
   function build() {
@@ -202,12 +229,20 @@ export function createHome(root, { theme }) {
       keys?.remove();
       lastKey = "";
       watch(null);
+      resized?.disconnect();
+      scroller = null;
       return;
     }
     watch(root.querySelector(".sidebar"));
     if (!block) build();
     if (block.parentElement !== empty) empty.prepend(block);
     if (keys.parentElement !== empty) empty.append(keys);
+    const nextScroller = empty.closest(".chat-scroll");
+    if (nextScroller !== scroller) {
+      resized?.disconnect();
+      scroller = nextScroller;
+      if (scroller) resized?.observe(scroller);
+    }
     const f = facts();
     const key = JSON.stringify(f);
     if (key === lastKey) return;
@@ -222,6 +257,7 @@ export function createHome(root, { theme }) {
     dispose() {
       unsubscribe();
       watch(null);
+      resized?.disconnect();
       cancelAnimationFrame(frame);
       block?.remove();
       keys?.remove();

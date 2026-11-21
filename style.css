@@ -2782,11 +2782,17 @@ select optgroup {
 
 /* --- empty state ------------------------------------------------------------ */
 
-.empty-chat { align-content: center; }
+/* The empty chat reads at the chat's own type size (13px compact, 14px
+ * comfortable) rather than as small print. */
+.empty-chat {
+  --vn-home-text: var(--message-font-size, 0.8125rem);
+  align-content: center;
+}
 .empty-chat h2 { font-size: 1.125rem; font-weight: 700; letter-spacing: 0; color: var(--accent-strong); }
 .empty-chat > p { font-size: 0.8125rem; color: var(--text-muted); }
 
 .vn-empty {
+  container-type: inline-size;
   display: grid;
   gap: 1.6rem;
   width: min(600px, 100%);
@@ -2808,7 +2814,7 @@ select optgroup {
   background: var(--om-fill);
   color: var(--text);
   font: inherit;
-  font-size: 0.75rem;
+  font-size: calc(var(--vn-home-text) - 1px);
   font-weight: 500;
   cursor: pointer;
   transition: background-color var(--vn-fast) ease, border-color var(--vn-fast) ease,
@@ -2827,7 +2833,7 @@ select optgroup {
 
 .vn-empty-label {
   padding-left: 2px;
-  font-size: 0.6875rem;
+  font-size: calc(var(--vn-home-text) - 2px);
   font-weight: 700;
   letter-spacing: 0;
   color: var(--vn-text-subtle);
@@ -2841,9 +2847,9 @@ select optgroup {
 
 .vn-recent {
   display: grid;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
-  padding: 0.65rem 0.8rem;
+  padding: 0.75rem 0.95rem;
   border: 1px solid var(--border);
   background: var(--vn-tool-bg);
   color: var(--text);
@@ -2861,7 +2867,7 @@ select optgroup {
 
 .vn-recent-title {
   overflow: hidden;
-  font-size: 0.75rem;
+  font-size: calc(var(--vn-home-text) - 1px);
   font-weight: 700;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -2869,14 +2875,17 @@ select optgroup {
 
 .vn-recent-meta {
   overflow: hidden;
-  font-size: 0.6875rem;
+  font-size: calc(var(--vn-home-text) - 2px);
   color: var(--vn-text-subtle);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-@media (width <= 560px) {
+/* A narrow chat (a phone, or a sidebar and the notes panel both open): one
+ * column of the two most recent, so the home still fits above the box. */
+@container (width < 460px) {
   .vn-recents { grid-template-columns: minmax(0, 1fr); }
+  .vn-recent:nth-child(n + 3) { display: none; }
 }
 
 /* --- home (home.js) ----------------------------------------------------- */
@@ -2888,49 +2897,79 @@ select optgroup {
 .empty-chat:has(> .vn-home) > h2,
 .empty-chat:has(> .vn-home) > p { display: none; }
 
-.vn-home {
-  display: grid;
-  justify-items: center;
-  gap: 1.75rem;
-  width: min(720px, 100%);
-  margin: 0 auto 0.4rem;
+/* It takes the space above the message box and sits in the middle of it,
+ * in the box's own column; taller than that space (short windows), it starts
+ * at the top and scrolls. Spacing follows the window's height. */
+.messages:has(> .empty-chat > .vn-home) { min-height: 100%; }
+
+.empty-chat:has(> .vn-home) {
+  --vn-home-gap: clamp(1rem, 3.2vh, 1.9rem);
+  flex: 1 0 auto;
+  align-content: safe center;
+  gap: 0;
 }
 
+.empty-chat:has(> .vn-home) > .vn-empty { width: 100%; margin-top: var(--vn-home-gap); }
+
+.empty-chat:has(> .vn-home) > .new-chat-pickers {
+  margin-top: calc(var(--vn-home-gap) * 0.75);
+  font-size: calc(var(--vn-home-text) - 1px);
+}
+
+.vn-home {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: var(--vn-home-gap);
+  width: 100%;
+  margin: 0;
+}
+
+/* The boxes keep to the chat's centre line, like the headline, the recent
+ * chats and the message box. The mark hangs to their left, out of the flow,
+ * so it never pushes them off it; home.js sets data-no-logo when the chat
+ * has no room for it there (a sidebar or the notes panel open, a narrow
+ * window). */
 .vn-fetch {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2.25rem;
-  max-width: 100%;
+  position: relative;
+  width: min(var(--vn-fetch-w, 52ch), 100%);
+  font-size: var(--vn-home-text);
 }
 
 .vn-fetch-logo {
-  flex: none;
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  margin-right: 2.6em;
+  translate: 0 -50%;
   color: var(--vn-accent);
 }
 
-.vn-fetch-logo svg { display: block; width: 91px; height: 65px; }
+.vn-fetch[data-no-logo] .vn-fetch-logo { display: none; }
+.vn-fetch-logo svg { display: block; width: 7.6em; height: 5.4em; }
 
 /* Box-drawing joins only at the font's own cell height, as in a terminal:
  * line-height normal is that height for whichever monospace font draws it. */
 .vn-fetch-info {
   display: grid;
   gap: 1.2em;
-  min-width: 0;
-  max-width: 100%;
+  width: 100%;
   color: var(--text);
-  font-size: 12px;
   line-height: normal;
   text-align: left;
 }
 
-.vn-fetch-section { max-width: 100%; }
+.vn-fetch-section { min-width: 0; }
 
+/* A rule's dashes stretch to the section's width, corners kept. */
 .vn-fetch-rule {
+  display: flex;
   overflow: hidden;
   color: var(--om-muted);
   white-space: pre;
 }
+
+.vn-fetch-fill { flex: 1 1 0; min-width: 1ch; overflow: hidden; }
 
 .vn-fetch-list { display: grid; margin: 0; }
 
@@ -2985,12 +3024,16 @@ button.vn-fetch-state:hover { color: var(--vn-accent-text); text-decoration: und
 .vn-fetch-dot-accent { color: var(--om-accent); }
 
 /* A prompt, and a block cursor that blinks like a terminal's. */
-.vn-home-line {
+.vn-home .vn-home-line {
+  max-width: 100%;
   margin: 0;
   color: var(--accent-strong);
-  font-size: 1.25rem;
+  font-size: calc(var(--vn-home-text) * 1.75);
   font-weight: 700;
+  line-height: 1.25;
   letter-spacing: 0;
+  text-align: center;
+  text-wrap: balance;
 }
 
 /* Omarchy's shell prompt: a bold cyan ❯. */
@@ -3010,20 +3053,34 @@ button.vn-fetch-state:hover { color: var(--vn-accent-text); text-decoration: und
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.5rem 1.4rem;
+  gap: 0.5rem 1.6rem;
   order: 10;
-  margin: 1.4rem 0 0;
+  margin: calc(var(--vn-home-gap, 1.4rem) * 0.8) 0 0;
   color: var(--vn-text-subtle);
-  font-size: 0.6875rem;
+  font-size: calc(var(--vn-home-text) - 2px);
 }
 
-.vn-home-key { display: inline-flex; align-items: center; gap: 6px; }
-.vn-home-key .vn-kbd { margin: 0; }
+.vn-home-keys[data-narrow] { display: none; }
+.vn-home-key { display: inline-flex; align-items: center; gap: 0.55em; }
+.vn-home-key .vn-kbd { min-width: 1.9em; height: 1.75em; margin: 0; font-size: 0.9em; }
 
+/* Short windows keep what is used, recent chats and the agent, in view
+ * without scrolling: the app keeps a chat scrolled to its end, so anything
+ * taller would open with its head under the header. The keys go first (the
+ * launcher's is also in the sidebar's search field), then the boxes. */
+@media (height <= 760px) {
+  .vn-home-keys { display: none; }
+}
+
+@media (height <= 640px) {
+  .vn-fetch { display: none; }
+}
+
+/* Phones: the boxes alone, at 12px, which still fits the width. */
 @media (width <= 640px) {
-  .vn-fetch { flex-direction: column; gap: 1rem; }
-  .vn-fetch-logo svg { width: 70px; height: 50px; }
-  .vn-home-line { font-size: 1.05rem; }
+  .vn-fetch { font-size: 12px; }
+  .vn-fetch-logo { display: none; }
+  .vn-home .vn-home-line { font-size: 1.15rem; }
   .vn-home-keys { display: none; }
 }
 

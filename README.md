@@ -43,6 +43,8 @@ New chats open on a home panel in the manner of a `fastfetch` screen instead of 
 - **workspace**: how many chats the sidebar holds, and live status read from the sidebar's own rows: **waiting** for your input, **running**, and **unread** (finished, not yet seen). A non-zero count opens its first chat. Then the theme, with a dot in each of its colours, and the Hub node when there is one.
 - A prompt line with a blinking block cursor (`❯ What should we build today?`, varying per visit), starter prompts for a first chat (once there are chats, your recent ones instead), and the keys that matter.
 
+The panel reads at the chat's own text size (Compact or Comfortable), spans the message box's column, and sits in the middle of the space above it. On short windows the key hints, then the framed sections, give way so your recent chats stay in view without scrolling.
+
 Status updates as the app marks its rows, with no polling. Turn the panel off under **Home panel** in Appearance (or `Home panel: Hide` in ⌘K) to get the app's own greeting back.
 
 ### A simpler sidebar

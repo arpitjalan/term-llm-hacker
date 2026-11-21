@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 
 // The home panel on a new chat: its fetch sections stand in for the app's
-// heading, fit the viewport, and the Appearance switch removes and restores it.
+// heading, fit the viewport, sit in the middle of the room above the message
+// box, and the Appearance switch removes and restores it.
 export async function checkHome(page) {
   const empty = page.locator('.messages > .empty-chat');
   await empty.waitFor({ state: 'attached' });
@@ -17,13 +18,24 @@ export async function checkHome(page) {
       headline: home.querySelector('h2.vn-home-line')?.textContent.replace(/^❯\s*/, '').trim() ?? '',
       appHeadingHidden: !appHeading || getComputedStyle(appHeading).display === 'none',
       keysLast: e.lastElementChild?.classList.contains('vn-home-keys') ?? false,
-      // Hints show wherever the layout has room for them (wider than 640px).
-      keysShown: innerWidth <= 640 || (() => {
+      // Hints show wherever the window has room for them (wider than 640px
+      // and taller than 760px); shorter windows keep recent chats in view.
+      keysShown: innerWidth <= 640 || innerHeight <= 760 || (() => {
         const k = e.querySelector(':scope > .vn-home-keys');
         const kr = k?.getBoundingClientRect();
         return Boolean(k && getComputedStyle(k).display !== 'none' && kr.width > 0 && kr.height > 0);
       })(),
       fits: r.left >= 0 && r.right <= innerWidth && document.documentElement.scrollWidth <= innerWidth,
+      // Where it fits without scrolling, as much room above it as below.
+      centred: (() => {
+        const scroller = document.querySelector('.chat-scroll');
+        if (!scroller || scroller.scrollHeight > scroller.clientHeight + 1) return true;
+        const shown = [...e.children].map((c) => c.getBoundingClientRect()).filter((b) => b.height > 0);
+        const m = document.querySelector('.messages').getBoundingClientRect();
+        const above = Math.min(...shown.map((b) => b.top)) - m.top;
+        const below = m.bottom - Math.max(...shown.map((b) => b.bottom));
+        return above > 0 && Math.abs(above - below) <= 32;
+      })(),
     };
   });
   assert(state.sections.some((s) => s.includes(' agent ')) && state.sections.some((s) => s.includes(' workspace ')), 'Fetch sections render');
@@ -33,6 +45,7 @@ export async function checkHome(page) {
   assert(state.keysLast, 'Key hints close the screen');
   assert(state.keysShown, 'Key hints are visible where there is room');
   assert(state.fits, 'Home fits the viewport without horizontal scrolling');
+  assert(state.centred, 'Home sits in the middle of the room above the message box');
 
   await page.locator('.vn-theme-btn').click();
   const toggle = page.locator('.vn-popover:not([data-leaving]) [data-home]');
