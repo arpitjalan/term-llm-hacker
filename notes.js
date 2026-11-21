@@ -16,7 +16,7 @@ import {
 } from "./markdown.js";
 
 const API = "/widgets/hacker-notes/api/notes";
-// term-llm's switch for a widget turned off in its Widgets dialog.
+// term-llm's switch for a widget turned off in its Settings (Widgets tab).
 const WIDGET_ENABLE = "/admin/widgets/hacker-notes/enable";
 const SAVE_DELAY = 600;
 const WIDTH = { min: 280, max: 720, initial: 380 };
@@ -61,7 +61,7 @@ const edited = (ms) => {
 const words = (text) => (text.trim() ? text.trim().split(/\s+/).length : 0);
 const applyEdit = (value, { from, to, insert }) => value.slice(0, from) + insert + value.slice(to);
 
-// The notes widget was switched off in term-llm's Widgets dialog, which then
+// The notes widget was switched off in term-llm's Settings, which then
 // answers its routes with "widget disabled: <mount>". The notes are kept.
 const switchedOff = (error) => Boolean(error.notJson && error.status === 404 && /^widget disabled\b/.test(error.text ?? ""));
 
@@ -72,7 +72,7 @@ function problem(error) {
   if (switchedOff(error)) {
     return {
       title: "Notes are turned off",
-      detail: "Their widget is disabled under Widgets. Your notes are still there; turn it back on to see them.",
+      detail: "Their widget is turned off in Settings → Widgets. Your notes are still there; turn it back on to see them.",
       off: true,
     };
   }
@@ -346,7 +346,7 @@ export function createNotes(root, { mount }) {
     renderList();
   }
 
-  // Switches the notes widget back on, as Widgets' Enable does, then loads.
+  // Switches the notes widget back on, as its switch in Settings does, then loads.
   async function turnOn(button) {
     button.disabled = true;
     button.textContent = "Turning on…";
