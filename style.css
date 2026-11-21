@@ -4644,9 +4644,12 @@ input[type="radio"] { accent-color: var(--vn-accent); }
 
   .tool-group-details:not(:empty) { animation: vn-rise 180ms var(--vn-ease) both; }
 
-  /* Dialogs grow and fade in; they close at once, as the app removes them. */
+  /* Dialogs grow and fade in; they close at once, as the app removes them.
+   * Filled backwards only: a transform kept after the animation (even the
+   * scale(1) it ends on) would become the containing block of every fixed
+   * menu inside the dialog (the widget and MCP row menus) and misplace it. */
   .modal-overlay:not(.hidden) { animation: vn-fade-in 180ms ease-out both; }
-  .modal-overlay:not(.hidden) > .modal { animation: vn-modal-in 200ms var(--vn-ease) both; }
+  .modal-overlay:not(.hidden) > .modal { animation: vn-modal-in 200ms var(--vn-ease) backwards; }
 
   .chip-popover[open],
   .chip-popover:not([hidden]) {
@@ -4797,7 +4800,7 @@ input[type="radio"] { accent-color: var(--vn-accent); }
 }
 
 @media (width <= 767px) and (prefers-reduced-motion: no-preference) {
-  .modal-overlay:not(.hidden) > .modal { animation: vn-sheet-in 250ms var(--vn-ease) both; }
+  .modal-overlay:not(.hidden) > .modal { animation: vn-sheet-in 250ms var(--vn-ease) backwards; }
 
   :root[data-vn-composer-bar] .chip-popover-runtime[open],
   .chip-popover[open] { animation: vn-sheet-in 250ms var(--vn-ease) both; }
