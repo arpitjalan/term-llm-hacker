@@ -16,6 +16,8 @@ import {
 } from "./markdown.js";
 
 const API = "/widgets/hacker-notes/api/notes";
+// term-llm's switch for a widget turned off in its Widgets dialog.
+const WIDGET_ENABLE = "/admin/widgets/hacker-notes/enable";
 const SAVE_DELAY = 600;
 const WIDTH = { min: 280, max: 720, initial: 380 };
 // Long notes repaint on the next frame instead of on every keystroke.
@@ -59,10 +61,21 @@ const edited = (ms) => {
 const words = (text) => (text.trim() ? text.trim().split(/\s+/).length : 0);
 const applyEdit = (value, { from, to, insert }) => value.slice(0, from) + insert + value.slice(to);
 
+// The notes widget was switched off in term-llm's Widgets dialog, which then
+// answers its routes with "widget disabled: <mount>". The notes are kept.
+const switchedOff = (error) => Boolean(error.notJson && error.status === 404 && /^widget disabled\b/.test(error.text ?? ""));
+
 // Why the list could not load, in words someone can act on.
 function problem(error) {
   if (error.status === 0) return { title: "Offline", detail: "Notes load again when the connection is back." };
   if (error.status === 401 || error.status === 403) return { title: "Signed out", detail: "Sign in to term-llm again to see notes." };
+  if (switchedOff(error)) {
+    return {
+      title: "Notes are turned off",
+      detail: "Their widget is disabled under Widgets. Your notes are still there; turn it back on to see them.",
+      off: true,
+    };
+  }
   if (error.notJson && (error.status === 404 || error.status < 300)) {
     return {
       title: "Notes aren't set up for this agent",
@@ -80,6 +93,7 @@ function clipProblem(error) {
   if (error.status === 413) return "Too long for a note";
   if (error.status === 0) return "Offline: not saved";
   if (error.status === 401 || error.status === 403) return "Signed out";
+  if (switchedOff(error)) return "Notes are turned off";
   if (error.notJson && (error.status === 404 || error.status < 300)) return "Notes aren't set up here";
   if (error.status === 502 || error.status === 503) return "Notes didn't start";
   return "Couldn't save";
@@ -209,6 +223,7 @@ export function createNotes(root, { mount }) {
     });
     stateEl.addEventListener("click", (event) => {
       if (event.target.closest(".vn-notes-retry")) refresh();
+      else if (event.target.closest(".vn-notes-turn-on")) turnOn(event.target.closest(".vn-notes-turn-on"));
       else if (event.target.closest(".vn-notes-empty-new")) startNew(query.trim());
     });
     listEl.addEventListener("pointermove", (event) => {
@@ -331,6 +346,20 @@ export function createNotes(root, { mount }) {
     renderList();
   }
 
+  // Switches the notes widget back on, as Widgets' Enable does, then loads.
+  async function turnOn(button) {
+    button.disabled = true;
+    button.textContent = "Turning on…";
+    try {
+      await apiRequest("POST", WIDGET_ENABLE, {});
+    } catch (error) {
+      listState = { kind: "problem", ...problem(error) };
+      renderList();
+      return;
+    }
+    refresh();
+  }
+
   // A note's new summary, in its place: pinned first, then newest. A search
   // result keeps its members; the full list takes in new ones.
   function upsert(summary) {
@@ -377,10 +406,13 @@ export function createNotes(root, { mount }) {
     let state = null;
     const q = query.trim();
     if (listState.kind === "problem") {
-      state = el("div", { class: "vn-notes-state is-problem" }, [
+      // Turned off on purpose reads as a state, not a failure.
+      state = el("div", { class: listState.off ? "vn-notes-state" : "vn-notes-state is-problem" }, [
         el("p", { class: "vn-notes-state-title", text: listState.title }),
         el("p", { text: listState.detail }),
-        el("button", { type: "button", class: "vn-notes-action vn-notes-retry", text: "Try again" }),
+        listState.off
+          ? el("button", { type: "button", class: "vn-notes-action vn-notes-turn-on", text: "Turn notes on" })
+          : el("button", { type: "button", class: "vn-notes-action vn-notes-retry", text: "Try again" }),
       ]);
     } else if (listState.kind === "loading" && !notes.length) {
       state = el("p", { class: "vn-notes-state", text: "Loading…" });
