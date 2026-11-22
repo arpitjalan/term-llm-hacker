@@ -221,14 +221,36 @@ export function createThread(root) {
   let scroller = null;
   let main = null;
   const arrivals = createArrivalTracker();
+  let baselined = false; // arrivals has seen the transcript since it was reset
   let session = null;
   // Attribute-only media/link updates and in-place text streaming do not reach
   // the main child-list observer. Observe the scroller without redecoration;
   // signatures exclude layout/disclosure controls, and the jump is its sibling.
-  const contentObserver = new MutationObserver(() => ensureJump());
+  // A reply streams in many writes a frame; one look per frame is enough.
+  let contentFrame = 0;
+  const contentObserver = new MutationObserver(() => {
+    contentFrame ||= requestAnimationFrame(() => {
+      contentFrame = 0;
+      ensureJump();
+    });
+  });
 
   function distanceFromBottom() {
     return scroller ? scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight : 0;
+  }
+
+  function rebaseline() {
+    arrivals.reset();
+    baselined = false;
+  }
+
+  // Whether the transcript's tail changed since the last look. Reading it
+  // walks the whole tail message, so it is only done while the reader is
+  // away from the end, the one place "New messages" can show.
+  function arrived() {
+    const changed = arrivals.observe(session, transcriptRecords(root));
+    baselined = true;
+    return changed;
   }
 
   function updateJump() {
@@ -243,6 +265,9 @@ export function createThread(root) {
   }
 
   function onScroll() {
+    // Leaving the end: note where the transcript stands, so whatever comes
+    // next counts as new.
+    if (!baselined && session && distanceFromBottom() > 480) arrived();
     updateJump();
   }
 
@@ -260,7 +285,7 @@ export function createThread(root) {
         characterData: true,
         subtree: true,
       });
-      arrivals.reset();
+      rebaseline();
       jump?.removeAttribute("data-new");
     }
     if (!nextMain) return;
@@ -284,11 +309,15 @@ export function createThread(root) {
     const nextSession = location.pathname;
     if (session !== nextSession) {
       session = nextSession;
-      arrivals.reset();
+      rebaseline();
       jump.removeAttribute("data-new");
     }
-    if (arrivals.observe(session, transcriptRecords(root)) && distanceFromBottom() > 480) {
-      jump.setAttribute("data-new", "");
+    // At the end, a streaming reply is in view, so there is nothing to flag:
+    // forget the baseline instead of walking the reply on every chunk.
+    if (distanceFromBottom() > 480) {
+      if (arrived()) jump.setAttribute("data-new", "");
+    } else if (baselined) {
+      rebaseline();
     }
     updateJump();
   }
@@ -381,6 +410,7 @@ export function createThread(root) {
     runSlash,
     dispose() {
       contentObserver.disconnect();
+      cancelAnimationFrame(contentFrame);
       scroller?.removeEventListener("scroll", onScroll);
       jump?.remove();
       root.querySelectorAll(".vn-code-head, .vn-user-actions, .vn-empty").forEach((n) => n.remove());
