@@ -3708,12 +3708,13 @@ button.vn-fetch-state:hover { color: var(--vn-accent-text); text-decoration: und
   color: var(--text);
   font: inherit;
   font-size: 0.75rem;
-  outline: none;
   transition: border-color var(--vn-fast) ease;
 }
 
 .vn-notes-search::placeholder { color: var(--vn-text-subtle); }
-.vn-notes-search:focus { border-color: var(--vn-accent); box-shadow: var(--vn-ring); }
+/* Its own frame is the focus ring, so the global outline (input:focus-visible,
+ * which outranks a lone class) is turned off here, as the sidebar search does. */
+.vn-notes-search:focus { outline: none; border-color: var(--vn-accent); box-shadow: var(--vn-ring); }
 
 .vn-notes-scroll {
   flex: 1;
@@ -3893,12 +3894,14 @@ button.vn-fetch-state:hover { color: var(--vn-accent-text); text-decoration: und
   height: 100%;
   overflow: hidden;
   resize: none;
-  outline: none;
   background: transparent;
   color: transparent;
   -webkit-text-fill-color: transparent;
   caret-color: var(--vn-accent);
 }
+
+/* A page, not a field: the caret is its focus. */
+.vn-note-text:focus { outline: none; }
 
 .vn-note-text::selection {
   background: color-mix(in srgb, var(--vn-accent) 30%, transparent);
