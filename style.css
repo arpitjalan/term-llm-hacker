@@ -1186,7 +1186,7 @@ a {
   color: var(--text);
   font-size: 0.75rem;
   transform-origin: top right;
-  animation: vn-pop-in 180ms var(--vn-ease) both;
+  animation: vn-pop-in 180ms var(--vn-ease) backwards;
 }
 
 .vn-popover[data-leaving] { animation: vn-pop-out 120ms ease-out both; }
@@ -3197,7 +3197,7 @@ button.vn-fetch-state:hover { color: var(--vn-accent-text); text-decoration: und
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
-  animation: vn-compact-in var(--vn-med) var(--vn-ease) both;
+  animation: vn-compact-in var(--vn-med) var(--vn-ease) backwards;
   transition: background-color var(--vn-fast) ease;
 }
 
@@ -3989,7 +3989,7 @@ button.vn-fetch-state:hover { color: var(--vn-accent-text); text-decoration: und
   background: var(--bg);
   color: var(--text);
   font-size: 0.6875rem;
-  animation: vn-rise var(--vn-med) var(--vn-ease) both;
+  animation: vn-rise var(--vn-med) var(--vn-ease) backwards;
 }
 
 .vn-notes-toast[hidden] { display: none; }
@@ -4044,7 +4044,7 @@ button.vn-fetch-state:hover { color: var(--vn-accent-text); text-decoration: und
   background: var(--bg);
   color: var(--text);
   font-size: 0.6875rem;
-  animation: vn-pop-in 140ms var(--vn-ease) both;
+  animation: vn-pop-in 140ms var(--vn-ease) backwards;
 }
 
 .vn-clip[hidden] { display: none; }
@@ -4677,21 +4677,27 @@ input[type="radio"] { accent-color: var(--vn-accent); }
     transition-duration: 160ms;
   }
 
+  /* Entrances fill backwards only, here and throughout: once over, they
+   * leave no effect behind. Filled forwards, a finished transform and
+   * opacity animation keeps its element on its own compositor layer for
+   * good, so every message in a chat would hold one, and everything painted
+   * after them another: 100 layers instead of 21 on a 17-message chat, and
+   * three times the layer work on each frame of a streaming reply. */
   .message,
-  .tool-group { animation: vn-rise 180ms var(--vn-ease) both; }
+  .tool-group { animation: vn-rise 180ms var(--vn-ease) backwards; }
 
-  .tool-group-details:not(:empty) { animation: vn-rise 180ms var(--vn-ease) both; }
+  .tool-group-details:not(:empty) { animation: vn-rise 180ms var(--vn-ease) backwards; }
 
   /* Dialogs grow and fade in; they close at once, as the app removes them.
    * Filled backwards only: a transform kept after the animation (even the
    * scale(1) it ends on) would become the containing block of every fixed
    * menu inside the dialog (the widget and MCP row menus) and misplace it. */
-  .modal-overlay:not(.hidden) { animation: vn-fade-in 180ms ease-out both; }
+  .modal-overlay:not(.hidden) { animation: vn-fade-in 180ms ease-out backwards; }
   .modal-overlay:not(.hidden) > .modal { animation: vn-modal-in 200ms var(--vn-ease) backwards; }
 
   .chip-popover[open],
   .chip-popover:not([hidden]) {
-    animation: vn-pop-in 180ms var(--vn-ease) both;
+    animation: vn-pop-in 180ms var(--vn-ease) backwards;
     transform-origin: top right;
   }
 
@@ -4705,7 +4711,7 @@ input[type="radio"] { accent-color: var(--vn-accent); }
   /* Menus and the slash list answer a keystroke or click and are gone in a
    * moment: no motion, as Omarchy's own menus. */
 
-  .toast { animation: vn-pop-up 220ms var(--vn-ease) both; }
+  .toast { animation: vn-pop-up 220ms var(--vn-ease) backwards; }
 
   .sidebar { transition-timing-function: var(--vn-ease); }
 }
@@ -4818,7 +4824,7 @@ input[type="radio"] { accent-color: var(--vn-accent); }
     transform-origin: bottom center;
   }
 
-  .vn-popover-backdrop { background: var(--om-scrim); animation: vn-fade-in 180ms ease-out both; }
+  .vn-popover-backdrop { background: var(--om-scrim); animation: vn-fade-in 180ms ease-out backwards; }
 
   .vn-themes { grid-template-columns: repeat(auto-fill, 38px); gap: 8px; justify-content: start; }
   .vn-swatch { max-width: 40px; justify-self: center; }
@@ -4841,8 +4847,8 @@ input[type="radio"] { accent-color: var(--vn-accent); }
   .modal-overlay:not(.hidden) > .modal { animation: vn-sheet-in 250ms var(--vn-ease) backwards; }
 
   :root[data-vn-composer-bar] .chip-popover-runtime[open],
-  .chip-popover[open] { animation: vn-sheet-in 250ms var(--vn-ease) both; }
+  .chip-popover[open] { animation: vn-sheet-in 250ms var(--vn-ease) backwards; }
 
-  .vn-popover { animation: vn-sheet-in 250ms var(--vn-ease) both; }
+  .vn-popover { animation: vn-sheet-in 250ms var(--vn-ease) backwards; }
   .vn-popover[data-leaving] { animation: vn-sheet-out 160ms ease-out both; }
 }
