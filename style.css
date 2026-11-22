@@ -643,7 +643,7 @@ a {
 
 .project-group-toggle:hover { background: var(--om-fill-hover); }
 .project-group-toggle:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--vn-accent); }
-:root[data-vn-type="comfortable"] .project-group-toggle { font-size: 0.8125rem; }
+:root:not([data-vn-type="compact"]) .project-group-toggle { font-size: 0.8125rem; }
 
 .session-date-group h4 {
   padding: 0.55rem 1.25rem 0.3rem;
@@ -699,6 +699,19 @@ a {
 .sidebar-actions:has(> .vn-nav) > .widgets-sidebar-btn,
 .sidebar-panel:has(.vn-nav) > .sidebar-view-footer { display: none; }
 
+/* One row's height, fixed so the space below can be kept for the links
+ * before nav.js adds them (main.js runs a second or more after the first
+ * paint): Activity and Conversations always show, Projects when the app has
+ * its switch. Widgets takes the place of the app's own button, and Routines
+ * may still arrive later. The app's controls stay usable meanwhile. */
+.sidebar-actions { --vn-nav-row: calc(2 * 0.55rem + 1.3 * 0.8125rem); --vn-nav-rows: 2; }
+.sidebar-panel:has(#sidebarViewProjects) .sidebar-actions { --vn-nav-rows: 3; }
+.sidebar .sidebar-content .sidebar-actions:not(:has(> .vn-nav))::after {
+  content: "";
+  order: -1;
+  height: calc(var(--vn-nav-rows) * (var(--vn-nav-row) + 1px) - 1px + 0.6rem);
+}
+
 .vn-nav {
   display: flex;
   flex-direction: column;
@@ -711,7 +724,8 @@ a {
   align-items: center;
   gap: 0.75rem;
   width: 100%;
-  padding: 0.55rem 0.75rem;
+  height: var(--vn-nav-row);
+  padding: 0 0.75rem;
   border: 0;
   background: transparent;
   color: var(--text-muted);
@@ -735,7 +749,7 @@ a {
 }
 
 .vn-nav-item[aria-current="page"] svg { color: var(--vn-accent); }
-.vn-nav-label { flex: 1; min-width: 0; }
+.vn-nav-label { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
 .vn-nav-count {
   color: var(--vn-text-subtle);
@@ -761,7 +775,7 @@ a {
 }
 
 @media (width <= 767px) {
-  .vn-nav-item { padding-block: 0.65rem; }
+  .sidebar-actions { --vn-nav-row: calc(2 * 0.65rem + 1.3 * 0.8125rem); }
 }
 
 /* ------------------------------------------------- hub agents section */
@@ -2483,6 +2497,22 @@ select optgroup {
 .markdown-body pre[data-vn-code] { padding-top: 0; }
 .markdown-body pre[data-vn-code] > code { padding-top: 0.75rem; }
 
+/* A block thread.js will give a header (the same test as its decorateCode)
+ * keeps the header's place until then: an empty bar of the same size. The
+ * script runs a second or more after the first paint, and decorates blocks
+ * that stream in a frame later, so without this the thread jumps 31px per
+ * block. */
+.markdown-body pre:has(> code):not([data-vn-code], :is(.tool-group, .shell-overlay, .diff-sidebar) pre) { padding-top: 0; }
+.markdown-body pre:has(> code):not([data-vn-code], :is(.tool-group, .shell-overlay, .diff-sidebar) pre) > code { padding-top: 0.75rem; }
+.markdown-body pre:has(> code):not([data-vn-code], :is(.tool-group, .shell-overlay, .diff-sidebar) pre)::before {
+  content: "";
+  display: block;
+  box-sizing: border-box; /* as the app's reset makes the header itself */
+  height: 30px;
+  border-bottom: 1px solid var(--border);
+  background: var(--om-fill);
+}
+
 .vn-code-head {
   position: sticky;
   left: 0;
@@ -2609,7 +2639,7 @@ select optgroup {
   .message.thought.live .thought-label { animation: none; color: var(--text); background: none; }
 }
 
-:root[data-vn-type="comfortable"] .thought-toggle { font-size: 0.8125rem; }
+:root:not([data-vn-type="compact"]) .thought-toggle { font-size: 0.8125rem; }
 
 .tool-group-details.open { padding: 0.35rem 0 0.4rem; }
 
@@ -4054,9 +4084,9 @@ button.vn-fetch-state:hover { color: var(--vn-accent-text); text-decoration: und
   100% { outline-color: transparent; }
 }
 
-:root[data-vn-type="comfortable"] .vn-note-row-title { font-size: 0.8125rem; }
-:root[data-vn-type="comfortable"] .vn-note-row-snippet { font-size: 0.75rem; }
-:root[data-vn-type="comfortable"] .vn-clip { font-size: 0.75rem; }
+:root:not([data-vn-type="compact"]) .vn-note-row-title { font-size: 0.8125rem; }
+:root:not([data-vn-type="compact"]) .vn-note-row-snippet { font-size: 0.75rem; }
+:root:not([data-vn-type="compact"]) .vn-clip { font-size: 0.75rem; }
 
 @media (prefers-reduced-motion: reduce) {
   .vn-notes-toast,
@@ -4515,56 +4545,56 @@ input[type="radio"] { accent-color: var(--vn-accent); }
 
 /* A roomier reading scale: 14px prose on a 1.75 line, 13px chrome.
  * Compact (default stylesheet values above) stays one click away. */
-:root[data-vn-type="comfortable"] .messages { gap: 1.1rem; }
-:root[data-vn-type="comfortable"] .messages > .message.user:not(:first-child) { margin-top: 1.5rem; }
+:root:not([data-vn-type="compact"]) .messages { gap: 1.1rem; }
+:root:not([data-vn-type="compact"]) .messages > .message.user:not(:first-child) { margin-top: 1.5rem; }
 
-:root[data-vn-type="comfortable"] { --message-font-size: 0.875rem; }
+:root:not([data-vn-type="compact"]) { --message-font-size: 0.875rem; }
 
-:root[data-vn-type="comfortable"] .message-body {
+:root:not([data-vn-type="compact"]) .message-body {
   line-height: 1.75;
   letter-spacing: 0;
 }
 
-:root[data-vn-type="comfortable"] .message.user .message-body {
+:root:not([data-vn-type="compact"]) .message.user .message-body {
   line-height: 1.6;
   padding: 0.65rem 1rem;
 }
 
-:root[data-vn-type="comfortable"] .markdown-body p { margin: 0.8em 0; }
-:root[data-vn-type="comfortable"] .markdown-body li { margin: 0.35em 0; }
-:root[data-vn-type="comfortable"] .markdown-body ul,
-:root[data-vn-type="comfortable"] .markdown-body ol { margin: 0.6em 0 0.9em; padding-left: 1.6rem; }
+:root:not([data-vn-type="compact"]) .markdown-body p { margin: 0.8em 0; }
+:root:not([data-vn-type="compact"]) .markdown-body li { margin: 0.35em 0; }
+:root:not([data-vn-type="compact"]) .markdown-body ul,
+:root:not([data-vn-type="compact"]) .markdown-body ol { margin: 0.6em 0 0.9em; padding-left: 1.6rem; }
 
-:root[data-vn-type="comfortable"] .markdown-body h1,
-:root[data-vn-type="comfortable"] .markdown-body h2,
-:root[data-vn-type="comfortable"] .markdown-body h3,
-:root[data-vn-type="comfortable"] .markdown-body h4 { margin: 1.4em 0 0.55em; }
-:root[data-vn-type="comfortable"] .markdown-body h1 { font-size: 1.25rem; }
-:root[data-vn-type="comfortable"] .markdown-body h2 { font-size: 1.0625rem; }
-:root[data-vn-type="comfortable"] .markdown-body h3 { font-size: 0.9375rem; }
-:root[data-vn-type="comfortable"] .markdown-body h4,
-:root[data-vn-type="comfortable"] .markdown-body h5,
-:root[data-vn-type="comfortable"] .markdown-body h6 { font-size: 0.875rem; }
+:root:not([data-vn-type="compact"]) .markdown-body h1,
+:root:not([data-vn-type="compact"]) .markdown-body h2,
+:root:not([data-vn-type="compact"]) .markdown-body h3,
+:root:not([data-vn-type="compact"]) .markdown-body h4 { margin: 1.4em 0 0.55em; }
+:root:not([data-vn-type="compact"]) .markdown-body h1 { font-size: 1.25rem; }
+:root:not([data-vn-type="compact"]) .markdown-body h2 { font-size: 1.0625rem; }
+:root:not([data-vn-type="compact"]) .markdown-body h3 { font-size: 0.9375rem; }
+:root:not([data-vn-type="compact"]) .markdown-body h4,
+:root:not([data-vn-type="compact"]) .markdown-body h5,
+:root:not([data-vn-type="compact"]) .markdown-body h6 { font-size: 0.875rem; }
 
-:root[data-vn-type="comfortable"] .markdown-body pre code { font-size: 0.8125rem; line-height: 1.65; padding: 1rem 1.1rem; }
-:root[data-vn-type="comfortable"] .markdown-body table { font-size: 0.8125rem; }
+:root:not([data-vn-type="compact"]) .markdown-body pre code { font-size: 0.8125rem; line-height: 1.65; padding: 1rem 1.1rem; }
+:root:not([data-vn-type="compact"]) .markdown-body table { font-size: 0.8125rem; }
 
-:root[data-vn-type="comfortable"] .prompt { font-size: 0.875rem; line-height: 1.6; }
-:root[data-vn-type="comfortable"] .vn-chip { font-size: 0.75rem; }
+:root:not([data-vn-type="compact"]) .prompt { font-size: 0.875rem; line-height: 1.6; }
+:root:not([data-vn-type="compact"]) .vn-chip { font-size: 0.75rem; }
 
-:root[data-vn-type="comfortable"] .tool-group-toggle { font-size: 0.8125rem; }
-:root[data-vn-type="comfortable"] .message-meta { font-size: 0.75rem; }
+:root:not([data-vn-type="compact"]) .tool-group-toggle { font-size: 0.8125rem; }
+:root:not([data-vn-type="compact"]) .message-meta { font-size: 0.75rem; }
 
-:root[data-vn-type="comfortable"] .session-title { font-size: 0.8125rem; line-height: 1.45; }
-:root[data-vn-type="comfortable"] .session-meta { font-size: 0.6875rem; }
-:root[data-vn-type="comfortable"] .session-group h3,
-:root[data-vn-type="comfortable"] .session-group-toggle { font-size: 0.6875rem; }
-:root[data-vn-type="comfortable"] .new-chat-btn,
-:root[data-vn-type="comfortable"] .widgets-sidebar-btn,
-:root[data-vn-type="comfortable"] .sidebar-search-input,
-:root[data-vn-type="comfortable"] .hub-agent-link { font-size: 0.8125rem; }
-:root[data-vn-type="comfortable"] .brand,
-:root[data-vn-type="comfortable"] .header-title { font-size: 0.875rem; }
+:root:not([data-vn-type="compact"]) .session-title { font-size: 0.8125rem; line-height: 1.45; }
+:root:not([data-vn-type="compact"]) .session-meta { font-size: 0.6875rem; }
+:root:not([data-vn-type="compact"]) .session-group h3,
+:root:not([data-vn-type="compact"]) .session-group-toggle { font-size: 0.6875rem; }
+:root:not([data-vn-type="compact"]) .new-chat-btn,
+:root:not([data-vn-type="compact"]) .widgets-sidebar-btn,
+:root:not([data-vn-type="compact"]) .sidebar-search-input,
+:root:not([data-vn-type="compact"]) .hub-agent-link { font-size: 0.8125rem; }
+:root:not([data-vn-type="compact"]) .brand,
+:root:not([data-vn-type="compact"]) .header-title { font-size: 0.875rem; }
 
 /* ---------------------------------------------------------------- motion */
 
