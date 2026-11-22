@@ -181,7 +181,15 @@ export function createHome(root, { theme }) {
   // chat's width changes: a sidebar or the notes panel opening, or the
   // window resizing.
   let scroller = null;
-  const resized = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => fitLogo());
+  // fitLogo changes the panel's layout, so it runs a frame after the observer
+  // reports, outside its callback (see the floating composer in main.js).
+  let fitFrame = 0;
+  const resized = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => {
+    fitFrame ||= requestAnimationFrame(() => {
+      fitFrame = 0;
+      fitLogo();
+    });
+  });
   function fitLogo() {
     const fetch = block?.querySelector(".vn-fetch");
     if (!fetch || !scroller) return;
@@ -259,6 +267,7 @@ export function createHome(root, { theme }) {
       watch(null);
       resized?.disconnect();
       cancelAnimationFrame(frame);
+      cancelAnimationFrame(fitFrame);
       block?.remove();
       keys?.remove();
     },

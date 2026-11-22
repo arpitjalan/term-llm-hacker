@@ -616,9 +616,20 @@ function createComposerBar(root) {
 function createFloatingComposer(root) {
   let main = null;
   let composer = null;
+  // Measured a frame after the observer reports, never inside its callback:
+  // the new height pads the chat scroller, which resizes what other observers
+  // watch (the app's message list, home.js's scroller) in that same frame,
+  // and Chrome reports that as "ResizeObserver loop completed with
+  // undelivered notifications". The same goes for home.js and notes.js.
+  let frame = 0;
   const ro = typeof ResizeObserver === "undefined"
     ? null
-    : new ResizeObserver(() => measure());
+    : new ResizeObserver(() => {
+      frame ||= requestAnimationFrame(() => {
+        frame = 0;
+        measure();
+      });
+    });
 
   function measure() {
     if (!main || !composer) return;
@@ -650,6 +661,7 @@ function createFloatingComposer(root) {
     sync,
     dispose() {
       ro?.disconnect();
+      cancelAnimationFrame(frame);
       main?.removeAttribute("data-vn-float");
       main?.style.removeProperty("--vn-composer-h");
     },

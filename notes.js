@@ -252,9 +252,16 @@ export function createNotes(root, { mount }) {
 
   // The panel's head matches the chat header's height, so their rules meet.
   let header = null;
+  // Set a frame after the observer reports, outside its callback (see the
+  // floating composer in main.js): a property on <html> restyles the page.
+  let headerHeight = 0;
+  let headerFrame = 0;
   const headerSize = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(([entry]) => {
-    const h = entry.borderBoxSize?.[0]?.blockSize ?? entry.target.offsetHeight;
-    if (h) html.style.setProperty("--vn-notes-head-h", `${h}px`);
+    headerHeight = entry.borderBoxSize?.[0]?.blockSize ?? entry.target.offsetHeight;
+    headerFrame ||= requestAnimationFrame(() => {
+      headerFrame = 0;
+      if (headerHeight) html.style.setProperty("--vn-notes-head-h", `${headerHeight}px`);
+    });
   });
 
   function ensureButton() {
@@ -1105,6 +1112,7 @@ export function createNotes(root, { mount }) {
       hideToast();
       cancelAnimationFrame(paintFrame);
       headerSize?.disconnect();
+      cancelAnimationFrame(headerFrame);
       button?.remove();
       panel?.remove();
       html.removeAttribute("data-vn-notes");
