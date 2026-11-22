@@ -8,7 +8,8 @@
 # term-llm does not follow symlinked extension folders, so this copies the
 # runtime files (it never touches your other extensions, widgets or
 # extensions.yaml unless you pass --enable). Notes themselves live outside
-# both folders, in ~/.local/share/term-llm/hacker/notes.db.
+# both folders, in ~/.local/share/term-llm/hacker/notes.db. local.json's
+# "defaults" are written into the installed stylesheet (needs python3).
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,7 +22,7 @@ for arg in "$@"; do
   case "$arg" in
     --quiet) QUIET=1 ;;
     --enable) ENABLE=1 ;;
-    -h|--help) sed -n '2,11p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
     *) echo "unknown option: $arg" >&2; exit 2 ;;
   esac
 done
@@ -29,9 +30,9 @@ done
 say() { [ "$QUIET" = 1 ] || echo "$@"; }
 
 mkdir -p "$DEST"
-FILES=(extension.yaml style.css main.js util.js colors.js themes.js thread.js arrivals.js composer.js palette.js notify.js favicon.js home.js nav.js routines.js notes.js markdown.js clip.js)
+FILES=(extension.yaml style.css main.js util.js themes.js thread.js arrivals.js composer.js palette.js notify.js favicon.js home.js nav.js routines.js notes.js markdown.js clip.js)
 for f in "${FILES[@]}"; do cp "$HERE/$f" "$DEST/$f"; done
-# Optional, untracked per-machine config (node default accents).
+# Optional, untracked per-machine config (appearance defaults, node accents and icons).
 if [ -f "$HERE/local.json" ]; then cp "$HERE/local.json" "$DEST/local.json"; fi
 # Optional, untracked pictures that local.json's nodeImages points at.
 if [ -d "$HERE/local" ]; then mkdir -p "$DEST/local" && cp -R "$HERE/local/." "$DEST/local/"; fi
@@ -50,6 +51,14 @@ cp "$HERE/widget/widget.yaml" "$HERE/widget/server.py" "$WIDGET_DEST/"
 
 say "Installed Hacker to $DEST"
 say "Installed its notes widget to $WIDGET_DEST"
+# local.json's "defaults" (theme, text size, corners) go into the stylesheet,
+# which applies from the first paint: term-llm runs main.js only after it
+# has started, a second or more later on a distant server.
+if command -v python3 >/dev/null 2>&1; then
+  python3 -I "$HERE/tools/bake_defaults.py" "$DEST" $([ "$QUIET" = 1 ] && echo --quiet)
+elif [ -f "$DEST/local.json" ] && grep -q '"defaults"' "$DEST/local.json"; then
+  say "Note: local.json's defaults need python3, which was not found on PATH; the page will start in Hacker's own defaults."
+fi
 command -v python3 >/dev/null 2>&1 || say "Note: notes need python3, which was not found on PATH."
 
 if [ "$ENABLE" = 1 ]; then

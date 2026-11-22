@@ -32,6 +32,24 @@ export function defaultPalettesMatch(css, js) {
   return matches(dark, defaults.DEFAULT_DARK) && matches(light, defaults.DEFAULT_LIGHT);
 }
 
+// local.example.json's "defaults" (written into the stylesheet by
+// tools/bake_defaults.py) must name real choices, each theme of its mode.
+export function checkExampleDefaults(defaults, themes) {
+  if (defaults === undefined) return;
+  if (!defaults || Array.isArray(defaults) || typeof defaults !== 'object') throw new Error('Expected defaults object');
+  const mode = (id) => themes.find((t) => t.id === id)?.mode;
+  const valid = {
+    appearance: (v) => ['system', 'light', 'dark'].includes(v),
+    darkTheme: (v) => mode(v) === 'dark',
+    lightTheme: (v) => mode(v) === 'light',
+    textSize: (v) => ['compact', 'comfortable'].includes(v),
+    corners: (v) => ['sharp', 'rounded'].includes(v),
+  };
+  for (const [key, value] of Object.entries(defaults)) {
+    if (!valid[key]?.(value)) throw new Error(`Bad example default ${key}: ${JSON.stringify(value)}`);
+  }
+}
+
 export function checkAssets(root) {
   const manifest = fs.readFileSync(path.join(root, 'extension.yaml'), 'utf8');
   if (!/^format_version: 1\s*$/m.test(manifest)) throw new Error('Unsupported extension format');
@@ -53,6 +71,8 @@ export function checkAssets(root) {
       throw new Error(`Expected ${key} string map`);
     }
   }
+  const { themes } = readThemes(fs.readFileSync(path.join(root, 'themes.js'), 'utf8'));
+  checkExampleDefaults(example.defaults, themes);
   if (!fs.readFileSync(path.join(root, 'LICENSE'), 'utf8').includes('MIT License')) throw new Error('Missing MIT license');
   if (!defaultPalettesMatch(fs.readFileSync(path.join(root, 'style.css'), 'utf8'), fs.readFileSync(path.join(root, 'themes.js'), 'utf8'))) {
     throw new Error('Pre-JS palettes drifted from themes.js (re-run tools/gen-themes.mjs)');
@@ -96,5 +116,5 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     });
     if (result.status !== 0) throw new Error(`${path.relative(root, file)}: ${result.stderr || result.error}`);
   }
-  console.log(`Source checks passed (${files.length} JavaScript files; assets, examples, licenses, default palettes, flat imports)`);
+  console.log(`Source checks passed (${files.length} JavaScript files; assets, examples, example defaults, licenses, default palettes, flat imports)`);
 }

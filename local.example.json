@@ -1,4 +1,11 @@
 {
+  "defaults": {
+    "appearance": "system",
+    "darkTheme": "tokyo-night",
+    "lightTheme": "catppuccin-latte",
+    "textSize": "comfortable",
+    "corners": "sharp"
+  },
   "nodeAccents": {
     "my-laptop": "accent",
     "my-server": "blue",

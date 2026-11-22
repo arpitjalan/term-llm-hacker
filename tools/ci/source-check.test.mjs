@@ -45,9 +45,18 @@ test('palette drift or absent blocks fail', () => {
   assert.equal(defaultPalettesMatch('', themes), false);
   assert.equal(defaultPalettesMatch(css, ''), false);
 });
+test('example defaults name real choices', (t) => {
+  const root = fixture(t);
+  fs.writeFileSync(path.join(root, 'local.example.json'),
+    '{"nodeAccents":{},"nodeIcons":{},"defaults":{"appearance":"dark","darkTheme":"night","lightTheme":"day","textSize":"compact","corners":"rounded"}}');
+  assert.doesNotThrow(() => checkAssets(root));
+});
 for (const [name, file, text] of [
   ['malformed JSON', 'local.example.json', '{'],
   ['bad map', 'local.example.json', '{"nodeAccents":[],"nodeIcons":{}}'],
+  ['defaults not an object', 'local.example.json', '{"nodeAccents":{},"nodeIcons":{},"defaults":[]}'],
+  ['a dark default that is a light theme', 'local.example.json', '{"nodeAccents":{},"nodeIcons":{},"defaults":{"darkTheme":"day"}}'],
+  ['an unknown default', 'local.example.json', '{"nodeAccents":{},"nodeIcons":{},"defaults":{"font":"mono"}}'],
   ['missing asset', 'extension.yaml', 'format_version: 1\ncss: missing.css\njs: main.js\n'],
   ['path traversal', 'extension.yaml', 'format_version: 1\ncss: ../outside.css\njs: main.js\n'],
   ['missing license', 'LICENSE', ''],

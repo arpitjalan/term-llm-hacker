@@ -1,7 +1,6 @@
 // Shared helpers for Hacker modules.
 
 import { THEMES, DEFAULT_DARK, DEFAULT_LIGHT } from "./themes.js";
-import { paletteVars } from "./colors.js";
 
 export { THEMES, DEFAULT_DARK, DEFAULT_LIGHT };
 
@@ -54,19 +53,47 @@ export function roleColor(theme, role) {
   return t?.colors[normalizeAccent(role) ?? "accent"] ?? t?.colors.accent ?? "#7aa2f7";
 }
 
+// The appearance the stylesheet showed before this script ran: its own
+// defaults, or local.json's "defaults" when install.sh wrote them in as
+// --vn-default-* (tools/bake_defaults.py). They stand in for any choice this
+// browser hasn't made, so the first paint and the script agree.
+export function bakedDefaults(style = getComputedStyle(document.documentElement)) {
+  const value = (name) => style.getPropertyValue(`--vn-default-${name}`).trim();
+  const dark = themeById(value("dark"));
+  const light = themeById(value("light"));
+  const appearance = value("appearance");
+  return {
+    scheme: ["system", "light", "dark"].includes(appearance) ? appearance : "system",
+    dark: dark?.mode === "dark" ? dark.id : DEFAULT_DARK,
+    light: light?.mode === "light" ? light.id : DEFAULT_LIGHT,
+    type: value("text-size") === "compact" ? "compact" : "comfortable",
+    corners: value("corners") === "rounded" ? "rounded" : "sharp",
+  };
+}
+
+// A theme's --om-* custom properties: every palette key, and the ink drawn on
+// each accent role (--om-on-blue, ...), both precomputed in themes.js by
+// tools/gen-themes.mjs (whose colors.js does the same for the stylesheet).
+export function paletteVars(theme) {
+  const vars = {};
+  for (const [key, value] of Object.entries(theme.colors)) vars[`--om-${key.replace(/_/g, "-")}`] = value;
+  for (const [role, ink] of Object.entries(theme.on)) vars[`--om-on-${role}`] = ink;
+  return vars;
+}
+
 // Paint a theme's palette onto <html> as the --om-* custom properties the
-// stylesheet reads (it carries Tokyo Night and Catppuccin Latte itself for
-// the moment before this runs).
+// stylesheet reads (it carries the default themes itself for the moment
+// before this runs).
 export function applyPalette(theme) {
   const style = document.documentElement.style;
-  for (const [name, value] of Object.entries(paletteVars(theme.colors))) {
+  for (const [name, value] of Object.entries(paletteVars(theme))) {
     if (style.getPropertyValue(name) !== value) style.setProperty(name, value);
   }
 }
 
 export function clearPalette() {
   const style = document.documentElement.style;
-  for (const name of Object.keys(paletteVars(THEMES[0].colors))) style.removeProperty(name);
+  for (const name of Object.keys(paletteVars(THEMES[0]))) style.removeProperty(name);
 }
 
 // Optional per-node default accents, keyed by Hub node id, from an untracked

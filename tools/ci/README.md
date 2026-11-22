@@ -66,7 +66,8 @@ namespace creation remains a separately untested setup until Actions executes.
 ## Scope and boundaries
 
 - `source-check.mjs`: parse-only JS syntax (ESM via stdin, no root package), manifest
-  CSS/JS file existence and confinement, example config shape/JSON, MIT license
+  CSS/JS file existence and confinement, example config shape/JSON (its appearance
+  `defaults` must name real choices), MIT license
   presence, and that style.css's pre-JS palettes match themes.js (as the existing tool checks).
   No formatter, strict lint rollout, app import, build, or dependency install.
   This is a partial manifest fast precheck, not YAML validation or a substitute for

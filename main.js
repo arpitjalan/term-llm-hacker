@@ -7,7 +7,7 @@
 
 import {
   KEYS, ACCENTS, NODE_ID, html, reducedMotion, read, write, nodeAccent, normalizeAccent,
-  THEMES, DEFAULT_DARK, DEFAULT_LIGHT, themeById, roleColor, applyPalette, clearPalette, glyphUrl,
+  THEMES, themeById, roleColor, applyPalette, clearPalette, bakedDefaults, glyphUrl,
   setApiPrefix, loadLocalConfig, restoreLocalConfig, NODE_ICONS, NODE_IMAGES, escapeXml,
 } from "./util.js";
 import { createThread } from "./thread.js";
@@ -24,7 +24,6 @@ import { createClipper, revealFromAddress } from "./clip.js";
 // one round trip later: on a distant agent that delays the theme by a few
 // hundred ms on every switch. tools/ci/source-check.mjs keeps this list whole.
 import "./themes.js";
-import "./colors.js";
 import "./arrivals.js";
 import "./markdown.js";
 
@@ -82,14 +81,16 @@ function createTheme() {
     const theme = themeById(read(key, fallback));
     return theme?.mode === mode ? theme.id : fallback;
   };
-  let scheme = read(KEYS.scheme, "system");
-  if (!SCHEMES.some((s) => s.id === scheme)) scheme = "system";
-  let darkTheme = saved(KEYS.themeDark, "dark", DEFAULT_DARK);
-  let lightTheme = saved(KEYS.themeLight, "light", DEFAULT_LIGHT);
+  // Choices this browser hasn't made take what the stylesheet already shows.
+  const defaults = bakedDefaults();
+  let scheme = read(KEYS.scheme, defaults.scheme);
+  if (!SCHEMES.some((s) => s.id === scheme)) scheme = defaults.scheme;
+  let darkTheme = saved(KEYS.themeDark, "dark", defaults.dark);
+  let lightTheme = saved(KEYS.themeLight, "light", defaults.light);
   let accent = nodeAccent(NODE_ID);
   let toolbar = read(KEYS.toolbar, "neutral") === "accent" ? "accent" : "neutral";
-  let type = read(KEYS.type, "comfortable") === "compact" ? "compact" : "comfortable";
-  let corners = read(KEYS.corners, "sharp") === "rounded" ? "rounded" : "sharp";
+  let type = read(KEYS.type, defaults.type) === "compact" ? "compact" : "comfortable";
+  let corners = read(KEYS.corners, defaults.corners) === "rounded" ? "rounded" : "sharp";
   // The fetch-style panel on new chats (home.js); on unless switched off.
   let home = read(KEYS.home, "on") !== "off";
   html.setAttribute("data-vn-type", type);

@@ -1,7 +1,8 @@
 // Omarchy theme palettes: reading a theme's colors.toml, Omarchy's own
 // fallback rules for keys a theme leaves out, and the CSS custom properties
-// Hacker paints with. Pure functions, shared by the runtime (main.js) and
-// the generator (tools/gen-themes.mjs), so a theme looks the same either way.
+// Hacker paints with. Pure functions for the generator (tools/gen-themes.mjs),
+// which writes their results into themes.js and style.css, so the page itself
+// never runs this colour maths.
 //
 // The resolution mirrors Omarchy's bin/omarchy-theme-color, and `mix` is the
 // same per-channel sRGB blend its templates use ({{ mix a b 40% }}), so
@@ -144,11 +145,17 @@ export function themeName(slug) {
   return String(slug).replace(/(^|-)([a-z])/g, (_, sep, ch) => sep + ch.toUpperCase()).replace(/-/g, " ");
 }
 
+// A readable ink for each accent role, as themes.js stores it ("on").
+export function inks(colors) {
+  return Object.fromEntries(ROLES.map((role) => [role, inkOn(colors[role], colors)]));
+}
+
 // The --om-* custom properties for a resolved palette: every key, plus a
-// readable ink for each accent role (--om-on-blue, ...).
+// readable ink for each accent role (--om-on-blue, ...). util.js builds the
+// same list from a themes.js entry.
 export function paletteVars(colors) {
   const vars = {};
   for (const key of PALETTE_KEYS) vars[`--om-${key.replace(/_/g, "-")}`] = colors[key];
-  for (const role of ROLES) vars[`--om-on-${role}`] = inkOn(colors[role], colors);
+  for (const [role, ink] of Object.entries(inks(colors))) vars[`--om-on-${role}`] = ink;
   return vars;
 }

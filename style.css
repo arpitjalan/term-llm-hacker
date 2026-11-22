@@ -24,7 +24,14 @@
  *                                   its palette colours
  *   data-vn-corners="sharp|rounded"
  *   data-vn-type="compact|comfortable"
- * and the theme's palette as inline --om-* custom properties (colors.js).
+ * and the theme's palette as inline --om-* custom properties (themes.js).
+ *
+ * term-llm runs main.js only once it has started, a second or more after the
+ * first paint on a distant server, so until then the page shows this sheet's
+ * defaults, matching main.js's: the default themes, sharp corners and
+ * comfortable text (the attribute rules are written so that a missing
+ * attribute means the default). install.sh rewrites them from local.json's
+ * "defaults" (tools/bake_defaults.py), so the first paint is your own look.
  */
 
 /* ------------------------------------------------------ Omarchy palettes */
@@ -32,7 +39,8 @@
 /* BEGIN GENERATED OMARCHY PALETTES (tools/gen-themes.mjs) */
 /* Before main.js applies the saved theme: Tokyo Night, or Catppuccin Latte on a
  * light system, so nobody sees the wrong scheme flash. main.js then sets the
- * same properties inline for whichever theme is chosen. */
+ * same properties inline for whichever theme is chosen. install.sh rewrites
+ * this block when local.json sets "defaults" (tools/bake_defaults.py). */
 :root {
   color-scheme: dark;
   --om-accent: #7aa2f7;
