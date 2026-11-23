@@ -1,19 +1,24 @@
 #!/usr/bin/env node
-// Regenerates docs/screenshots/*.png with neutral demo content.
+// Regenerates docs/screenshots/ with neutral demo content.
 //
 //   node tools/screenshots.mjs
 //
-// Runs against your local `term-llm serve` (same discovery as check.mjs).
-// It opens an unsaved new chat and replaces everything visible (sidebar,
-// thread, title, node name, project picker) with injected demo markup in
-// the same structure the app renders, styled by the installed extension.
-// Nothing is sent and none of your conversations appear in the images.
+// Runs against your local `term-llm serve` (same discovery as check.mjs), or
+// the server that HACKER_URL and TERM_LLM_TOKEN name. It opens an unsaved new
+// chat and replaces everything visible (sidebar, thread, title, node name,
+// project picker) with injected demo markup in the same structure the app
+// renders, styled by the installed extension. The server's providers,
+// routines and notes are answered with demo data, so the model, the Routines
+// count and the notes panel look the same on any server, and no real note is
+// read or written. Nothing is sent and none of your conversations appear in
+// the images. The home-screen GIF needs ffmpeg on PATH and is skipped without.
 
 import { createRequire } from "module";
-import { execSync } from "child_process";
+import { execSync, spawnSync } from "child_process";
 import fs from "fs";
+import os from "os";
 import path from "path";
-import { THEMES } from "../themes.js";
+import { THEMES, DEFAULT_DARK } from "../themes.js";
 
 const HERE = path.dirname(new URL(import.meta.url).pathname);
 const OUT = path.resolve(HERE, "../docs/screenshots");
@@ -56,6 +61,46 @@ const AGENTS = [
   ["docker-dev", "docker-dev", "green", false, false],
   ["assistant", "assistant", "magenta", false, false],
 ];
+
+// What the server is asked about, answered here: one provider and its models
+// (the model the composer and home panel name), and how many routines it runs.
+const PROVIDERS = { object: "list", data: [{ name: "claude-bin", type: "claude-bin", configured: true, is_default: true,
+  is_builtin: true, default_model: "opus", models: ["opus", "sonnet", "haiku"], service_tier: "" }] };
+const MODELS = { object: "list", data: ["opus", "sonnet", "haiku"].map((id) => ({ id, object: "model", created: 0, owned_by: "term-llm" })) };
+const ROUTINES = 4;
+
+// The notes panel's notes, in the widget's order (pinned, then newest), with
+// the title and snippet the widget would derive. The second was saved from
+// the demo chat.
+const NOTES = [
+  ["release", true, 9, "Release checklist v2.4", "Cap billing retries", null,
+    "# Release checklist v2.4\n\n- [x] Cap billing retries\n- [x] Spec the permanent-failure path\n- [ ] Backfill `attempt_count`\n- [ ] Draft the release notes\n"],
+  ["rollout", false, 2, "Billing retries: rollout",
+    "Retries are now capped at 5 attempts with jittered exponential backoff. Charges that keep failing move to failed_permanently instead of looping.",
+    "Refactor the billing worker",
+    "# Billing retries: rollout\n\nRetries are now capped at **5 attempts** with jittered exponential backoff. Charges that keep failing move to `failed_permanently` instead of looping.\n\n" +
+    "```ruby\ndef retry_delay(attempt)\n  base = 2**attempt * 30\n  base + rand(0..base / 4)\nend\n```\n\n" +
+    "- [x] Attempt count lives on the charge\n- [x] Spec: cap, jitter, permanent failure\n- [ ] Alert when `failed_permanently` > 0.5%\n- [ ] Ship behind `BILLING_RETRY_CAP`\n"],
+  ["standup", false, 26, "Standup, Tuesday", "Billing worker: retries capped, spec green", null,
+    "# Standup, Tuesday\n\n- Billing worker: retries capped, spec green\n- Flaky spec: a timezone at midnight UTC\n- Next: release notes for **v2.4**\n"],
+  ["reading", false, 26 * 60, "Reading list", "Designing Data-Intensive Applications, ch. 8", null,
+    "# Reading list\n\n- [ ] *Designing Data-Intensive Applications*, ch. 8\n- [x] The twelve-factor app\n- [ ] SQLite's WAL mode docs\n"],
+].map(([id, pinned, age, title, snippet, from, body]) => ({
+  id: `demo-${id}`, title, snippet, pinned, age, version: 1,
+  source: from ? { url: new URL("chat/demo#message-demo", base).href, title: from } : null, body,
+}));
+
+// The notes widget's API, read-only: the list and each note, aged from the
+// moment they are asked for. Nothing reaches the server's widget.
+function notesRoute(route) {
+  const request = route.request();
+  if (request.method() !== "GET") return route.fulfill({ status: 405, json: { error: "demo notes are read-only" } });
+  const dated = ({ age, ...note }) => ({ ...note, created_at: Date.now() - age * min, updated_at: Date.now() - age * min });
+  const id = new URL(request.url()).pathname.match(/\/api\/notes\/([^/]+)$/)?.[1];
+  if (!id) return route.fulfill({ json: { notes: NOTES.map(({ body, ...summary }) => dated(summary)), total: NOTES.length } });
+  const note = NOTES.find((n) => n.id === decodeURIComponent(id));
+  return note ? route.fulfill({ json: dated(note) }) : route.fulfill({ status: 404, json: { error: "note not found" } });
+}
 
 const ICON_CHEVRON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>';
 const ICON_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path></svg>';
@@ -118,7 +163,7 @@ function threadHTML() {
   <div class="message-meta"><time>12m</time></div></article>`;
 }
 
-const browser = await chromium.launch();
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 
 async function setup({ width, height, scheme, mobile = false, thread = true, theme = null }) {
   const ctx = await browser.newContext({
@@ -142,6 +187,10 @@ async function setup({ width, height, scheme, mobile = false, thread = true, the
     const js = /\.m?js(\?|$)/.test(url);
     return route.fulfill({ status: 200, contentType: js ? "text/javascript" : "text/css", body: js ? "export default {};" : "" });
   });
+  await ctx.route(/\/v1\/providers(\?|$)/, (route) => route.fulfill({ json: PROVIDERS }));
+  await ctx.route(/\/v1\/models(\?|$)/, (route) => route.fulfill({ json: MODELS }));
+  await ctx.route(/\/v2\/jobs(\?|$)/, (route) => route.fulfill({ json: { total: ROUTINES, data: [] } }));
+  await ctx.route(/\/widgets\/hacker-notes\/api\/notes(\/|\?|$)/, notesRoute);
   const p = await ctx.newPage();
   await p.goto(base, { waitUntil: "load" });
   await p.waitForTimeout(2500);
@@ -188,9 +237,9 @@ async function save(p, name, clip) {
   console.log("wrote", name);
 }
 
-// Hero shots
+// Hero shots: tall enough that the reply's last line clears the composer.
 for (const scheme of ["dark", "light"]) {
-  const { p, ctx } = await setup({ width: 1440, height: 900, scheme });
+  const { p, ctx } = await setup({ width: 1440, height: 940, scheme });
   await p.evaluate(() => { const s = document.querySelector(".chat-scroll"); s.scrollTop = 0; });
   await save(p, `hero-${scheme}`);
   await ctx.close();
@@ -267,6 +316,50 @@ for (const scheme of ["dark", "light"]) {
   await p.waitForTimeout(300);
   const height = await p.evaluate(() => document.body.scrollHeight);
   await save(p, "themes", { x: 0, y: 0, width: 1600, height });
+  await ctx.close();
+}
+
+// The home screen in every theme, as a GIF: the default dark theme, the other
+// dark ones, then the light ones, 1.3 s each. The panel names each theme.
+if (spawnSync("ffmpeg", ["-version"], { stdio: "ignore" }).status !== 0) {
+  console.log("skipped home-themes (needs ffmpeg)");
+} else {
+  const frames = fs.mkdtempSync(path.join(os.tmpdir(), "hacker-frames-"));
+  const order = [
+    THEMES.find((t) => t.id === DEFAULT_DARK),
+    ...THEMES.filter((t) => t.mode === "dark" && t.id !== DEFAULT_DARK),
+    ...THEMES.filter((t) => t.mode === "light"),
+  ];
+  for (const [i, theme] of order.entries()) {
+    const { p, ctx } = await setup({ width: 1440, height: 900, scheme: theme.mode, theme: theme.id, thread: false });
+    // The block cursor shown in every frame, not caught mid-blink.
+    await p.addStyleTag({ content: ".vn-home-cursor { animation: none !important; opacity: 1 !important; }" });
+    await p.waitForTimeout(600);
+    await p.screenshot({ path: path.join(frames, `${String(i).padStart(2, "0")}.png`) });
+    await ctx.close();
+  }
+  // A palette per frame, so each theme keeps its own colours.
+  const gif = spawnSync("ffmpeg", ["-v", "error", "-y", "-framerate", "10/13", "-i", path.join(frames, "%02d.png"),
+    "-vf", "scale=1200:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=single:reserve_transparent=0[p];[b][p]paletteuse=new=1:dither=none",
+    "-loop", "0", path.join(OUT, "home-themes.gif")], { stdio: "inherit" });
+  fs.rmSync(frames, { recursive: true, force: true });
+  if (gif.status !== 0) throw new Error("ffmpeg could not write home-themes.gif");
+  console.log("wrote home-themes");
+}
+
+// Notes beside the chat, open on the note saved from it.
+{
+  const { p, ctx } = await setup({ width: 1440, height: 900, scheme: "light", theme: "catppuccin-latte" });
+  if (!(await p.$(".vn-notes:not([hidden])"))) await p.click(".vn-notes-toggle");
+  await p.locator(".vn-note-row-title", { hasText: /^Billing retries: rollout$/ }).click();
+  await p.waitForFunction(() => document.querySelector(".vn-note-text")?.value.length > 0);
+  // No caret in the editor; the narrower chat back at its first message.
+  await p.evaluate(() => {
+    document.activeElement?.blur();
+    document.querySelector(".chat-scroll").scrollTop = 0;
+  });
+  await p.waitForTimeout(400);
+  await save(p, "notes");
   await ctx.close();
 }
 

@@ -2,7 +2,7 @@
 
 A terminal-style look for the [term-llm](https://term-llm.com) web UI.
 
-Hacker gives term-llm the feel of a terminal: your choice of 23 themes, one monospace font everywhere, square corners, flat surfaces framed by borders instead of shadows or glass, and the accent on whatever is focused. It keeps practical additions such as a command palette, notes, code wrapping, and context usage, and stays light: no bundled fonts or images, about 100 KB gzipped in all. It is a web extension, not a fork: no term-llm rebuild or upstream patches required.
+Hacker gives term-llm the feel of a terminal: your choice of 23 themes, one monospace font everywhere, square corners, flat surfaces framed by borders instead of shadows or glass, and the accent on whatever is focused. Around that it adds a `fastfetch`-style home screen, a ⌘K launcher for chats, agents, commands and settings, context usage in the composer, and a Notes panel that keeps Markdown notes, including text saved straight from a chat, in SQLite on the agent's machine. It stays light: no bundled fonts or images, about 110 KB gzipped in all. It is a web extension, not a fork: no term-llm rebuild or upstream patches required.
 
 ![Hacker in Tokyo Night with a demo conversation](docs/screenshots/hero-dark.png)
 
@@ -46,6 +46,8 @@ New chats open on a home panel in the manner of a `fastfetch` screen instead of 
 The panel reads at the chat's own text size (Compact or Comfortable), spans the message box's column, and sits in the middle of the space above it. On short windows the key hints, then the framed sections, give way so your recent chats stay in view without scrolling.
 
 Status updates as the app marks its rows, with no polling. Turn the panel off under **Home panel** in Appearance (or `Home panel: Hide` in ⌘K) to get the app's own greeting back.
+
+![The home screen in each of the 23 themes](docs/screenshots/home-themes.gif)
 
 ### A simpler sidebar
 
@@ -104,6 +106,8 @@ A **Notes** panel on the right, opened with the notebook button beside the appea
 - **Save from the chat:** select text in a conversation and a small **Save note** button appears where the selection ends. The note keeps it as Markdown (code blocks with their language, lists and tasks, quotes, tables, links); a selection across several messages labels each part with who wrote it. It also keeps a link back: the note shows **from** and the chat's name, which opens that chat at the message, marked for a moment. The link is the chat's address plus `#message-<id>`, so it works pasted into a browser too.
 - A note edited in two tabs at once never silently overwrites the other: you choose which version to keep.
 - Under a Hub, each agent has its own notes. The panel stays open, and the note you had open comes back, as you move between agents and pages. Drag its left edge to resize it; on phones it covers the screen.
+
+![Notes beside a chat, open on a note saved from it](docs/screenshots/notes.png)
 
 The notes are kept by a small widget that `./install.sh` installs next to the extension (`widget/`, as `~/.config/term-llm/widgets/hacker-notes`). term-llm starts it when the panel first asks for notes, serves it behind the web UI's own login at `<base>/widgets/hacker-notes/` over a private Unix socket, and stops it after ten idle minutes; its entry in term-llm's Widgets list opens the panel. If the widget is turned off in term-llm's Settings → Widgets (on a term-llm that has that tab), the panel says notes are turned off, keeps them, and offers to turn them back on. It needs `python3` (standard library only) and widgets left on (no `--disable-widgets`). The database is `~/.local/share/term-llm/hacker/notes.db` (under `$XDG_DATA_HOME` when set); set `HACKER_NOTES_DB` in the server's environment to move it. Agents running as the same user on one machine share it, and a container agent needs the widget installed inside its container. term-llm names the socket after the widget's folder, so if one user runs two `serve web` processes on one machine, rename the folder for one of them.
 
@@ -239,7 +243,7 @@ To return to the stock UI, disable Hacker in **Settings → Extensions** and ref
 - Some features decorate existing DOM selectors rather than stable extension APIs. A term-llm upgrade can require an extension update.
 - Context availability depends on the server/provider. Agent indicators reflect the host UI; they are not independent health checks.
 - Clipboard and browser-chrome features depend on browser permissions and support.
-- README screenshots use **injected fictional demo conversations and agents** in the real themed UI. The composer image includes illustrative context data. These demonstrate appearance, not execution of the example workflow or connectivity to example nodes.
+- README screenshots use **injected fictional demo conversations, agents and notes** in the real themed UI, with a demo model and routine count. The composer image includes illustrative context data. These demonstrate appearance, not execution of the example workflow or connectivity to example nodes.
 
 ## Development and checks
 
@@ -280,7 +284,7 @@ For an explicit server, set `HACKER_URL` and `TERM_LLM_TOKEN` in your environmen
 node tools/screenshots.mjs
 ```
 
-The screenshot tool opens unsaved drafts and injects fictional content to regenerate `docs/screenshots/`, including the twelve-theme collage. Inspect every output before committing, especially after host UI changes.
+The screenshot tool opens unsaved drafts and injects fictional content to regenerate `docs/screenshots/`, including the twelve-theme collage and, when `ffmpeg` is on your `PATH`, a GIF of the home screen in every theme. It answers the server's provider list, routines and notes with demo data, so the shots look the same on any server and never read or change your notes. Set `CHROMIUM_PATH` to use a browser of your own. Inspect every output before committing, especially after host UI changes.
 
 ```bash
 node tools/live-preview.mjs
